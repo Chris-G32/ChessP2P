@@ -15,7 +15,7 @@ def get_first_non_local_address():
                 return addr.address
     return None
 
-# received_requests=[]
+received_requests=[]
 class Client:
     CHALLENGE_PORT=12345
     PLAY_ON_PORT=12346
@@ -24,10 +24,10 @@ class Client:
     server_up=False
     server_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     def add_request(game_req:game_request):
-        
-        ViewChallenges.received_requests.append(game_request(game_req.ip,game_req.user,game_req.timestamp))
-        if ViewChallenges.received_requests.__len__()>10:
-            ViewChallenges.received_requests.pop(0)
+        global received_requests
+        received_requests.append(game_request(game_req.ip,game_req.user,game_req.timestamp))
+        if received_requests.__len__()>10:
+            received_requests.pop(0)
         
     def shutdown_server():
         Client.server_socket.shutdown()
@@ -129,11 +129,10 @@ class ChallengeFriend(MenuOption):
         
 class ViewChallenges(MenuOption):
     DISPLAY_TEXT="View Incoming Challenges"
-    received_requests=[]
     #Returns none on invalid input
-    def validate_input(inp:str,max_val:int):
+    def validate_input(self,inp:str,max_val:int):
         try:
-            selection=int(inp)
+            inp=int(inp)
         except ValueError:
             print("Please enter an integer number")
             return None
@@ -141,7 +140,7 @@ class ViewChallenges(MenuOption):
             print(f"Enter a number between 0 and {max_val}")
             return None
         
-        return selection
+        return inp
     def accept_challenge(challenge:game_request):
         game=Game()
         success=game.attempt_connection(challenge.ip,Client.PLAY_ON_PORT,challenge,False)
@@ -150,34 +149,34 @@ class ViewChallenges(MenuOption):
         else:
             print("Failed to accept challenge")
     def execute(self):
-        
+        global received_requests
         #Check not empty
-        if ViewChallenges.received_requests.__len__()<1:
+        if received_requests.__len__()<1:
             print("No challenges...")
             return
         
         #Get requests that are too old
         remove_candidates=[]
-        for i in ViewChallenges.received_requests:
-            REQUEST_EXPIRE_TIME_SECONDS=120
+        for i in received_requests:
+            REQUEST_EXPIRE_TIME_SECONDS=60*4#4 minutes
             time_since_received=(datetime.now()-i.timestamp).total_seconds()
             if time_since_received>REQUEST_EXPIRE_TIME_SECONDS:
                 remove_candidates.append(i)
 
         #Remove old requests
         for i in remove_candidates:
-            ViewChallenges.received_requests.remove(i)
+            received_requests.remove(i)
         
         #Check again that all requests weren't expired
-        if ViewChallenges.received_requests.__len__()<1:
+        if received_requests.__len__()<1:
             print("No challenges...")
             return
         
         #Display to user
         print("0: Exit")
         count=1
-        for i in ViewChallenges.received_requests:
-            print(f"{count}: {i}")
+        for i in received_requests:
+            print(f"{count}: From {i.ip}, Message {i.user}")
             count+=1
 
         selection=None
@@ -186,7 +185,7 @@ class ViewChallenges(MenuOption):
             selection=self.validate_input(selection,count)
 
         if selection>0:
-            ViewChallenges.accept_challenge(ViewChallenges.received_requests[selection])
+            ViewChallenges.accept_challenge(received_requests[selection])
         
         
 EXIT_STR="exit"
