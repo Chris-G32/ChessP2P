@@ -38,6 +38,7 @@ if __name__=="__main__":
         try:
             
             MENU.display()
+            print(f"Your IP: {Client.ip}")
             MENU.select(input())
             error_count=0
         except:
