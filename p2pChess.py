@@ -27,7 +27,7 @@ if __name__=="__main__":
     # signal.signal(signal.SIGINT, handle_shutdown)
     # signal.signal(signal.SIGTERM,handle_shutdown)
     #Starting background server to listen for challenges
-    challenge_listener = Thread(target = Client.start_server)
+    challenge_listener = Thread(target = Client.start_server,daemon=True)
     challenge_listener.start()
 
     MENU=create_menu()
@@ -48,9 +48,5 @@ if __name__=="__main__":
                 print("Application errored too many times. Attempting to clean up and exit..,")
                 should_exit=True
     #Shutdown server
-    Client.shutdown_server()
-    challenge_listener.join()
-    # challenge_listener.join()
-    print("Resources cleaned up...")
     print("Exiting...")
     
