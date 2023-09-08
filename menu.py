@@ -41,8 +41,8 @@ class Client:
             print("Connected to:", client_address)
 
             while Client.keep_listening:
-                data = client_socket.recv(1024).decode()
-                client_socket.close()
+                data = client_socket.recv(2048).decode()
+                
                 
                 try:
                     tmp_dict=json.loads(data)
@@ -59,7 +59,7 @@ class Client:
                 if not data:
                     break
                 print("Received:", data)
-            # client_socket.close()
+            client_socket.close()
         except:
             print("error in challenge listener, please restart app")
             
