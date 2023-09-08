@@ -42,7 +42,6 @@ class Client:
 
             while Client.keep_listening:
                 data = client_socket.recv(1024).decode()
-                client_socket.close()
                 
                 try:
                     tmp_dict=json.loads(data)
@@ -59,7 +58,7 @@ class Client:
                 if not data:
                     break
                 print("Received:", data)
-            # client_socket.close()
+            client_socket.close()
         except:
             print("error in challenge listener, please restart app")
             
@@ -95,13 +94,13 @@ class ChallengeFriend(MenuOption):
         try:
             #Attempt connect to challenged ip
             client_socket.connect((host, port))
-        except:
-            print("Failed to send challenge! :(")
+        except Exception as e:
+            print(e)
             return
         
         client_socket.settimeout(None)
         
-        message = json.dumps(challenge_msg)
+        message = str(vars(challenge_msg))
         client_socket.send(message.encode())
         client_socket.close()
         
