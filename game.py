@@ -7,7 +7,7 @@ import time
 import socket
 import os
 import signal
-from menu import Client
+
 from cancellable_action import CancellableAction
 
 class GameConnectionHandler(CancellableAction):
@@ -115,10 +115,11 @@ class Game:
     def start(self,is_users_turn):
         self.is_users_turn=is_users_turn
         while not self.game_over:
-            while True:
+            while True and not self.game_over:
                 message = input("Enter a message or 'exit' to exit: ")
                 if message.lower() == 'exit':
                     self.game_over=True
+                    return
                 if(self.is_users_turn):
                     self.connection_handler.client_socket.send(message.encode())
                     #End turn
