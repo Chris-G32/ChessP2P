@@ -59,6 +59,7 @@ class MenuOption:
 
     def get_formatted_text(self,option_number):
         return f"\n\t{option_number}: {self.DISPLAY_TEXT}"
+    
 class ChallengeFriend(MenuOption):
     DISPLAY_TEXT="Challenge Friend"
      
@@ -66,17 +67,16 @@ class ChallengeFriend(MenuOption):
         #Send challenge
         host = friend_ip # IP address of the server
         port = Client.CHALLENGE_PORT
-
-        #DBG
         game=Game(is_host=True)
-        challenge_accepted= game.attempt_connection(Client.ip,Client.PLAY_ON_PORT,challenge_msg)
-        ##END DBG
+        
+        #Send initial challenge object
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.settimeout(10)
         try:
+            #Attempt connect to challenged ip
             client_socket.connect((host, port))
         except:
-            print("failed connection")
+            print("Failed to send challenge! :(")
             return
         
         client_socket.settimeout(None)
@@ -84,9 +84,12 @@ class ChallengeFriend(MenuOption):
         message = json.dumps(challenge_msg)
         client_socket.send(message.encode())
         client_socket.close()
-        game=Game(is_host=True)
-        challenge_accepted=game.await_accept(Client.ip,Client.CHALLENGE_PORT,challenge_msg)
-        client_socket.close()
+        
+        #Wait for connection back from challenged IP
+        challenge_accepted= game.attempt_connection(Client.ip,Client.PLAY_ON_PORT,challenge_msg)
+
+        if challenge_accepted:
+            game.start(True)
 
     def execute(self):
         ip_to_challenge=input("Enter your friends IP address: ")
