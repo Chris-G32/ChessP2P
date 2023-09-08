@@ -112,20 +112,25 @@ class Game:
         return self.connection_handler.attempt_connection(port,host_on,friend_ip)   
     def respond_to_challenge(self,port:str,challenge:game_request):
         return self.connection_handler.attempt_connection_to_server(port,challenge)
+    
+    
+    
     def start(self,is_users_turn):
         self.is_users_turn=is_users_turn
         while not self.game_over:
             while True and not self.game_over:
-                message = input("Enter a message or 'exit' to exit: ")
-                if message.lower() == 'exit':
-                    self.game_over=True
-                    return
                 if(self.is_users_turn):
+                    message = input("Enter a message or 'exit' to exit: ")
+                    if message.lower() == 'exit':
+                        self.game_over=True
+                        continue
+                        
                     self.connection_handler.client_socket.send(message.encode())
                     #End turn
                     self.is_users_turn=not self.is_users_turn
                 else:
-                    print("Not your turn... Please wait for a response")
+                    resp=self.connection_handler.client_socket.recv(1028).decode()
+                    print(resp)
 
             # self.board.display_board()
             
