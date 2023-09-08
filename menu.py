@@ -23,6 +23,7 @@ class Client:
     keep_listening=False
     server_up=False
     server_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
     def add_request(game_req:game_request):
         global received_requests
         received_requests.append(game_request(game_req.ip,game_req.user,game_req.timestamp))
@@ -30,7 +31,9 @@ class Client:
             received_requests.pop(0)
         
     def shutdown_server():
-        Client.server_socket.shutdown()
+        Client.server_socket.shutdown(socket.SHUT_RDWR)
+        print("Shutting down server...")
+        Client.keep_listening=False
     def start_server():
         Client.keep_listening=True
         Client.server_up=True
@@ -47,11 +50,11 @@ class Client:
             while Client.keep_listening:
                 try:
                     client_socket, client_address = server_socket.accept()
+                    data = client_socket.recv(2048).decode()
                 except OSError:
-                    print("Server shutting down...")
-                # print("Connected to:", client_address)
-                data = client_socket.recv(2048).decode()
-                
+                    print("Server shut down!")
+                    return
+
                 try:
                     tmp_dict=json.loads(data,object_hook=json_util.object_hook)
                     challenge=game_request(**tmp_dict)
@@ -66,16 +69,12 @@ class Client:
 
                 if not data:
                     break
-                # print("Received:", data)
                 client_socket.close()
         except:
-            print("error in challenge listener, please restart app")
+            print("--error in challenge listener, please restart app--")
             
         server_socket.close()
         Client.server_up=False
-
-    def shutdown_server():
-        Client.keep_listening=False
     
 class MenuOption:
     DISPLAY_TEXT="USING DEFAULT TEXT, INHERITED FROM MENU_OPTION"

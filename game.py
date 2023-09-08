@@ -83,7 +83,7 @@ class GameConnectionHandler(CancellableAction):
         return False
 
 
-# import asyncio
+# import asynciol
 class Game:
     def __init__(self,is_host=False):
         if is_host:
