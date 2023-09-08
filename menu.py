@@ -43,7 +43,6 @@ class Client:
             while Client.keep_listening:
                 data = client_socket.recv(2048).decode()
                 
-                
                 try:
                     tmp_dict=json.loads(data)
                     challenge=game_request(**tmp_dict)
@@ -54,7 +53,7 @@ class Client:
                     # Handle the exception
                     with open('invalid_requests.log', 'a') as file:
                         log_str=f"Invalid challenge request from {client_address[0]} over port {client_address[1]}, Received: {data_copy}"
-                        file.write(log_str)
+                        file.writelines(log_str)
 
                 if not data:
                     break
