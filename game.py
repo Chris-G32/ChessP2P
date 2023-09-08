@@ -117,6 +117,7 @@ class Game:
     
     def start(self,is_users_turn):
         self.is_users_turn=is_users_turn
+        print("Starting game!!!")
         while not self.game_over:
             while True and not self.game_over:
                 if(self.is_users_turn):
@@ -129,6 +130,7 @@ class Game:
                     #End turn
                     self.is_users_turn=not self.is_users_turn
                 else:
+                    print("Wait for your opponents move...")
                     resp=self.connection_handler.client_socket.recv(1028).decode()
                     print(resp)
                     self.is_users_turn=not self.is_users_turn
