@@ -7,7 +7,6 @@ import time
 import socket
 import os
 import signal
-from menu import Client
 from cancellable_action import CancellableAction
 
 class GameConnectionHandler(CancellableAction):
@@ -36,7 +35,7 @@ class GameConnectionHandler(CancellableAction):
             except OSError:
                 pass
 
-            if(client_address==friend and not self.is_cancelled()):
+            if(client_address[0]==friend and not self.is_cancelled()):
                 self.active_connection=True
                 self.client_socket=client_socket
                 print("Match connection succeeded. Enter anything to continue...")
