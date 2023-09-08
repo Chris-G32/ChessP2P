@@ -4,6 +4,7 @@ from game_request import game_request
 import json
 import collections
 from game import Game
+from datetime import datetime
 class Client:
     CHALLENGE_PORT=12345
     PLAY_ON_PORT=12346
@@ -33,6 +34,19 @@ class Client:
             while Client.keep_listening:
                 data = client_socket.recv(1024).decode()
                 client_socket.close()
+                
+                try:
+                    tmp_dict=json.loads(data)
+                    challenge=game_request(**tmp_dict)
+                    Client.add_request(challenge)
+                except (ValueError , TypeError):
+                    data_copy=data
+                    data_copy.replace("\n",'')
+                    # Handle the exception
+                    with open('invalid_requests.log', 'a') as file:
+                        log_str=f"Invalid challenge request from {client_address[0]} over port {client_address[1]}, Received: {data_copy}"
+                        file.write(log_str)
+
                 if not data:
                     break
                 print("Received:", data)
@@ -86,7 +100,7 @@ class ChallengeFriend(MenuOption):
         client_socket.close()
         
         #Wait for connection back from challenged IP
-        challenge_accepted= game.attempt_connection(Client.ip,Client.PLAY_ON_PORT,challenge_msg)
+        challenge_accepted= game.attempt_connection(Client.ip,Client.PLAY_ON_PORT,challenge_msg,True)
 
         if challenge_accepted:
             game.start(True)
@@ -99,8 +113,67 @@ class ChallengeFriend(MenuOption):
         ChallengeFriend.send_game_request(ip_to_challenge,challenge)
         
 class ViewChallenges(MenuOption):
+    DISPLAY_TEXT="View Incoming Challenges"
+
+    #Returns none on invalid input
+    def validate_input(inp:str,max_val:int):
+        try:
+            selection=int(inp)
+        except ValueError:
+            print("Please enter an integer number")
+            return None
+        if inp<0 or inp>max_val:
+            print(f"Enter a number between 0 and {max_val}")
+            return None
+        
+        return selection
+    def accept_challenge(challenge:game_request):
+        game=Game()
+        success=game.attempt_connection(challenge.ip,Client.PLAY_ON_PORT,challenge,False)
+        if success:
+            game.start(False)
+        else:
+            print("Failed to accept challenge")
     def execute(self):
-        print('"executed view"')
+        #Check not empty
+        if Client.received_requests.count>0:
+            print("No challenges...")
+            return
+        
+        #Get requests that are too old
+        remove_candidates=[]
+        for i in Client.received_requests:
+            REQUEST_EXPIRE_TIME_SECONDS=120
+            time_since_received=(datetime.now()-i.timestamp).total_seconds()
+            if time_since_received>REQUEST_EXPIRE_TIME_SECONDS:
+                remove_candidates.append(i)
+
+        #Remove old requests
+        for i in remove_candidates:
+            Client.received_requests.remove(i)
+        
+        #Check again that all requests weren't expired
+        if Client.received_requests.count>0:
+            print("No challenges...")
+            return
+        
+        #Display to user
+        print("0: Exit")
+        count=1
+        for i in Client.received_requests:
+            print(f"{count}: {i}")
+            count+=1
+
+        selection=None
+        while not selection:
+            selection=input("Enter the challenges number to accept, or 0 to go back.")
+            selection=self.validate_input(selection,count)
+
+        
+        if selection>0:
+            ViewChallenges.accept_challenge(Client.received_requests[selection])
+        
+        
 EXIT_STR="exit"
 class ExitApp(MenuOption):
     DISPLAY_TEXT="Exit"

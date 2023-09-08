@@ -21,7 +21,7 @@ class GameConnectionHandler(CancellableAction):
         host=args[0]
         port=args[1]
         challenge=args[2]
-        
+
         self.server_socket.bind((host, port))
 
         while not self.is_cancelled():
@@ -69,6 +69,18 @@ class GameConnectionHandler(CancellableAction):
         socket_proc.join()
 
         return self.client_socket!=None 
+    def attempt_connection_to_server(self,host,port,challenge:game_request):
+        self.client_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client_socket.timeout=30
+        try:
+            self.client_socket.connect((challenge.ip,port))
+            return True
+        except ConnectionRefusedError:
+            print("Connection was refused. Server may be down or unreachable.")
+        except Exception as e:
+            print(f"An error occurred while connecting: {str(e)}")
+        return False
+
 
 # import asyncio
 class Game:
@@ -86,10 +98,14 @@ class Game:
         while not self.is_users_turn:
             time.sleep(1)
 
-    def attempt_connection(self,host,port,challenge:game_request):
-        #If this returns and it was cancelled, it means connection didn't happen
-        #If it is not cancelled and returns, action must have succeeded
-        return self.connection_handler.attempt_connection(host,port,challenge)
+    def attempt_connection(self,host,port,challenge:game_request,is_host):
+        if is_host:
+            #If this returns and it was cancelled, it means connection didn't happen
+            #If it is not cancelled and returns, action must have succeeded
+            return self.connection_handler.attempt_connection(host,port,challenge)
+        elif not is_host:
+            return self.connection_handler.attempt_connection_to_server(host,port,challenge)
+        
         
     def start(self,is_users_turn):
         self.is_users_turn=is_users_turn
