@@ -69,9 +69,6 @@ class Client:
     def shutdown_server():
         Client.keep_listening=False
     
-
-
-
 class MenuOption:
     DISPLAY_TEXT="USING DEFAULT TEXT, INHERITED FROM MENU_OPTION"
     def __init__(self)->None:
@@ -145,7 +142,7 @@ class ViewChallenges(MenuOption):
             print("Failed to accept challenge")
     def execute(self):
         #Check not empty
-        if Client.received_requests.count>0:
+        if Client.received_requests.count()>0:
             print("No challenges...")
             return
         
