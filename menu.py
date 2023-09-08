@@ -142,7 +142,7 @@ class ViewChallenges(MenuOption):
             print("Failed to accept challenge")
     def execute(self):
         #Check not empty
-        if Client.received_requests.count()>0:
+        if Client.received_requests.__len__()<1:
             print("No challenges...")
             return
         
@@ -159,7 +159,7 @@ class ViewChallenges(MenuOption):
             Client.received_requests.remove(i)
         
         #Check again that all requests weren't expired
-        if Client.received_requests.count>0:
+        if Client.received_requests.__len__()<1:
             print("No challenges...")
             return
         
