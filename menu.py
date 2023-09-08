@@ -113,7 +113,7 @@ class ChallengeFriend(MenuOption):
         client_socket.close()
         
         #Wait for connection back from challenged IP
-        challenge_accepted= game.attempt_connection(Client.ip,Client.PLAY_ON_PORT,challenge_msg,True)
+        challenge_accepted= game.await_challenge_response(Client.PLAY_ON_PORT,Client.ip,friend_ip)
 
         if challenge_accepted:
             game.start(True)
@@ -141,8 +141,8 @@ class ViewChallenges(MenuOption):
         return inp
     def accept_challenge(challenge:game_request):
         game=Game()
-        success=game.attempt_connection(challenge.ip,Client.PLAY_ON_PORT,challenge,False)
-        if success:
+        challenge_connected=game.respond_to_challenge(Client.PLAY_ON_PORT,challenge=challenge)
+        if challenge_connected:
             game.start(False)
         else:
             print("Failed to accept challenge")
