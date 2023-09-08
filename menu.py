@@ -43,7 +43,6 @@ class Client:
             server_socket.listen(10)  # Allow ten incoming connection
 
             # print("Waiting for a connection...")
-            
 
             while Client.keep_listening:
                 try:
@@ -67,7 +66,7 @@ class Client:
 
                 if not data:
                     break
-                print("Received:", data)
+                # print("Received:", data)
                 client_socket.close()
         except:
             print("error in challenge listener, please restart app")
@@ -173,19 +172,19 @@ class ViewChallenges(MenuOption):
             return
         
         #Display to user
-        print("0: Exit")
+        print("\t0: Exit")
         count=1
         for i in received_requests:
-            print(f"{count}: From {i.ip}, Message {i.user}")
+            print(f"\t{count}: {i.ip} - {i.user}")
             count+=1
 
         selection=None
-        while not selection:
-            selection=input("Enter the challenges number to accept, or 0 to go back.")
+        while selection==None:
+            selection=input("Enter the challenges number to accept, or 0 to go back: ")
             selection=self.validate_input(selection,count)
 
         if selection>0:
-            ViewChallenges.accept_challenge(received_requests[selection])
+            ViewChallenges.accept_challenge(received_requests[selection-1])
         
         
 EXIT_STR="exit"
@@ -207,13 +206,11 @@ class Menu:
                 print("Invalid choice. Please select a valid option.")            
         except ValueError:
             print("Invalid input. Please enter a number.")
-        try:
-            option=self.options[choice-1]
-            ret=option.execute()
-            self.exit_requested=(ret==EXIT_STR)
-        except Exception as e:
-            print("Error in executing option")
-            print(e)
+        
+        option=self.options[choice-1]
+        ret=option.execute()
+        self.exit_requested=(ret==EXIT_STR)
+        
 
     def display(self):
         print(Menu.MENU_HEADER)
