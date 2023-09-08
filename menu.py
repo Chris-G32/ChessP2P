@@ -15,33 +15,42 @@ def get_first_non_local_address():
                 return addr.address
     return None
 
+# received_requests=[]
 class Client:
     CHALLENGE_PORT=12345
     PLAY_ON_PORT=12346
-    
-    received_requests=collections.deque(maxlen=10)
     ip=get_first_non_local_address()
     keep_listening=False
     server_up=False
-
+    server_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     def add_request(game_req:game_request):
-        Client.received_requests.append(game_req)
-
+        
+        ViewChallenges.received_requests.append(game_request(game_req.ip,game_req.user,game_req.timestamp))
+        if ViewChallenges.received_requests.__len__()>10:
+            ViewChallenges.received_requests.pop(0)
+        
+    def shutdown_server():
+        Client.server_socket.shutdown()
     def start_server():
         Client.keep_listening=True
         Client.server_up=True
         host = Client.ip  
         port = Client.CHALLENGE_PORT
         try:
-            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_socket=Client.server_socket
+            # server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_socket.bind((host, port))
             server_socket.listen(10)  # Allow ten incoming connection
 
             # print("Waiting for a connection...")
-            client_socket, client_address = server_socket.accept()
-            print("Connected to:", client_address)
+            
 
             while Client.keep_listening:
+                try:
+                    client_socket, client_address = server_socket.accept()
+                except OSError:
+                    print("Server shutting down...")
+                # print("Connected to:", client_address)
                 data = client_socket.recv(2048).decode()
                 
                 try:
@@ -59,7 +68,7 @@ class Client:
                 if not data:
                     break
                 print("Received:", data)
-            client_socket.close()
+                client_socket.close()
         except:
             print("error in challenge listener, please restart app")
             
@@ -120,7 +129,7 @@ class ChallengeFriend(MenuOption):
         
 class ViewChallenges(MenuOption):
     DISPLAY_TEXT="View Incoming Challenges"
-
+    received_requests=[]
     #Returns none on invalid input
     def validate_input(inp:str,max_val:int):
         try:
@@ -141,14 +150,15 @@ class ViewChallenges(MenuOption):
         else:
             print("Failed to accept challenge")
     def execute(self):
+        
         #Check not empty
-        if Client.received_requests.__len__()<1:
+        if ViewChallenges.received_requests.__len__()<1:
             print("No challenges...")
             return
         
         #Get requests that are too old
         remove_candidates=[]
-        for i in Client.received_requests:
+        for i in ViewChallenges.received_requests:
             REQUEST_EXPIRE_TIME_SECONDS=120
             time_since_received=(datetime.now()-i.timestamp).total_seconds()
             if time_since_received>REQUEST_EXPIRE_TIME_SECONDS:
@@ -156,17 +166,17 @@ class ViewChallenges(MenuOption):
 
         #Remove old requests
         for i in remove_candidates:
-            Client.received_requests.remove(i)
+            ViewChallenges.received_requests.remove(i)
         
         #Check again that all requests weren't expired
-        if Client.received_requests.__len__()<1:
+        if ViewChallenges.received_requests.__len__()<1:
             print("No challenges...")
             return
         
         #Display to user
         print("0: Exit")
         count=1
-        for i in Client.received_requests:
+        for i in ViewChallenges.received_requests:
             print(f"{count}: {i}")
             count+=1
 
@@ -175,9 +185,8 @@ class ViewChallenges(MenuOption):
             selection=input("Enter the challenges number to accept, or 0 to go back.")
             selection=self.validate_input(selection,count)
 
-        
         if selection>0:
-            ViewChallenges.accept_challenge(Client.received_requests[selection])
+            ViewChallenges.accept_challenge(ViewChallenges.received_requests[selection])
         
         
 EXIT_STR="exit"

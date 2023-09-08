@@ -1,6 +1,7 @@
 from menu import Menu,ChallengeFriend,ViewChallenges,ExitApp,Client
 from chessboard import ChessBoard
 import multiprocessing
+from threading import Thread
 import signal
 import time
 def create_menu():
@@ -26,7 +27,7 @@ if __name__=="__main__":
     # signal.signal(signal.SIGINT, handle_shutdown)
     # signal.signal(signal.SIGTERM,handle_shutdown)
     #Starting background server to listen for challenges
-    challenge_listener = multiprocessing.Process(target = Client.start_server)
+    challenge_listener = Thread(target = Client.start_server)
     challenge_listener.start()
 
     MENU=create_menu()
@@ -47,7 +48,8 @@ if __name__=="__main__":
                 print("Application errored too many times. Attempting to clean up and exit..,")
                 should_exit=True
     #Shutdown server
-    challenge_listener.terminate()
+    Client.shutdown_server()
+    challenge_listener.join()
     # challenge_listener.join()
     print("Resources cleaned up...")
     print("Exiting...")
