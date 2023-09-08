@@ -131,6 +131,9 @@ class Game:
                 else:
                     resp=self.connection_handler.client_socket.recv(1028).decode()
                     print(resp)
+                    self.is_users_turn=not self.is_users_turn
+                
+
 
             # self.board.display_board()
             
