@@ -100,7 +100,7 @@ class ChallengeFriend(MenuOption):
         
         client_socket.settimeout(None)
         
-        message = str(vars(challenge_msg))
+        message = json.dumps(challenge_msg.__dict__)
         client_socket.send(message.encode())
         client_socket.close()
         
