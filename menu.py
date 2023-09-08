@@ -41,7 +41,8 @@ class Client:
             print("Connected to:", client_address)
 
             while Client.keep_listening:
-                data = client_socket.recv(1024).decode()
+                data = client_socket.recv(2048).decode()
+                
                 
                 try:
                     tmp_dict=json.loads(data)
