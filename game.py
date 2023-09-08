@@ -71,9 +71,10 @@ class GameConnectionHandler(CancellableAction):
         return self.client_socket!=None 
     def attempt_connection_to_server(self,host,port,challenge:game_request):
         self.client_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client_socket.timeout=30
+        self.client_socket.settimeout(30)
         try:
             self.client_socket.connect((challenge.ip,port))
+            self.client_socket.settimeout(None)
             return True
         except ConnectionRefusedError:
             print("Connection was refused. Server may be down or unreachable.")
