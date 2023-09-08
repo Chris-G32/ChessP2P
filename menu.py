@@ -6,6 +6,7 @@ import collections
 from game import Game
 from datetime import datetime
 import psutil
+from bson import json_util
 
 def get_first_non_local_address():
     for interface, addrs in psutil.net_if_addrs().items():
@@ -44,7 +45,7 @@ class Client:
                 data = client_socket.recv(2048).decode()
                 
                 try:
-                    tmp_dict=json.loads(data)
+                    tmp_dict=json.loads(data,object_hook=json_util.object_hook)
                     challenge=game_request(**tmp_dict)
                     Client.add_request(challenge)
                 except (ValueError , TypeError):
@@ -100,7 +101,7 @@ class ChallengeFriend(MenuOption):
         
         client_socket.settimeout(None)
         
-        message = json.dumps(challenge_msg.__dict__)
+        message = json.dumps(challenge_msg.__dict__,default=json_util.default)
         client_socket.send(message.encode())
         client_socket.close()
         

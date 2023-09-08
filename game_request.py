@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import datetime,date
+
+
 
 class game_request:
     def __init__(self,ip:str,user:str,timestamp=datetime.now()):
@@ -10,3 +12,7 @@ class game_request:
         self.ip=ob['ip']
         self.user=ob['user']
         self.timestamp=ob['timestamp']
+    def serialize(self):
+        pass
+    def deserialize(self):
+        pass
