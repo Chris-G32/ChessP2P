@@ -5,12 +5,21 @@ import json
 import collections
 from game import Game
 from datetime import datetime
+import psutil
+
+def get_first_non_local_address():
+    for interface, addrs in psutil.net_if_addrs().items():
+        for addr in addrs:
+            if addr.family == socket.AF_INET and not addr.address.startswith('127.'):
+                return addr.address
+    return None
+
 class Client:
     CHALLENGE_PORT=12345
     PLAY_ON_PORT=12346
     
     received_requests=collections.deque(maxlen=10)
-    ip=socket.gethostbyname(socket.gethostname())
+    ip=get_first_non_local_address()
     keep_listening=False
     server_up=False
 
