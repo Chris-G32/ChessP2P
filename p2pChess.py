@@ -39,7 +39,7 @@ if __name__=="__main__":
             
             MENU.display()
             print(f"Your IP: {Client.ip}")
-            MENU.select(input())
+            MENU.select(input("Enter an option: "))
             error_count=0
         except:
             error_count+=1
