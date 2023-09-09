@@ -5,7 +5,7 @@ class Tile:
         self.piece = piece
     def occupied(self):
         return self.piece==None
-    
+  
 class ChessBoard:
     BLACK = 0
     WHITE = 1
@@ -13,6 +13,11 @@ class ChessBoard:
     def __init__(self,user_color):
         self.user_color=user_color
         self.board = self.create_board()
+        self.king_positions = {
+            ChessBoard.WHITE: (7, 4),  # White king starts at e1
+            ChessBoard.BLACK: (0, 4),  # Black king starts at e8
+        }
+        self.is_check = False
 
     def create_board(self):
         # Create an 8x8 chessboard using a list of lists
@@ -90,22 +95,68 @@ class ChessBoard:
         print("   " + "-" * 17)
         print(column_labels)
     
+    def decode_move(self, move_str):
+        move_str = move_str.strip()
+        move_dict = {
+            'from': {},
+            'dest': {}
+        }
+
+        # Check if the move string has a valid length (e.g., 'e4' or 'Nf3')
+        if len(move_str) < 2:
+            print("Invalid move: Too short.")
+            return None
+
+        # Extract the source and destination squares from the move string
+        from_square = move_str[:-2]
+        dest_square = move_str[-2:]
+
+        # Check if the source and destination squares are valid
+        if not self.is_valid_square(from_square) or not self.is_valid_square(dest_square):
+            print("Invalid move: Invalid square notation.")
+            return None
+
+        move_dict['from']['row'], move_dict['from']['col'] = self.square_to_coordinates(from_square)
+        move_dict['dest']['row'], move_dict['dest']['col'] = self.square_to_coordinates(dest_square)
+
+        return move_dict
+
+    def is_valid_square(self, square):
+        # Check if the square notation is valid (e.g., 'a1' to 'h8')
+        if len(square) != 2:
+            return False
+        file, rank = square[0], square[1]
+        return file in 'abcdefgh' and rank in '12345678'
+
+    def square_to_coordinates(self, square):
+        # Convert square notation (e.g., 'e4') to row and column indices
+        file, rank = square[0], square[1]
+        row = 8 - int(rank)
+        col = ord(file) - ord('a')
+        return row, col
 
     def move(self, move_str):#Eg of a move is Ne4
-        pass
-        # current_tile
-        # piece=self.board[row][col].piece
-        # if(piece.color != self.user_color):
-        #     print("You can only move your own pieces!!!")
-        #     return False
-        # if(not piece.validate_move())
-        # # Place a chess piece on the board
-        # if 0 <= row < 8 and 0 <= col < 8:
-        #     self.board[row][col].piece = piece
-        # else:
-        #     print("Invalid position")
+        move_decoded = self.decode_move(move_str)
+        if move_decoded is None:
+            return False
+        starting_row=move_decoded['from']['row']
+        starting_col=move_decoded['from']['col']
+        destination_row=move_decoded['dest']['row']
+        destination_column=move_decoded['dest']['col']
+        piece=self.board[starting_row][starting_col].piece
+        if(piece.color != self.user_color):
+            print("You can only move your own pieces!!!")
+            return False
+        if(not piece.validate_move()):
+            return False
+        # Place a chess piece on the board
+        if 0 <= destination_row < 8 and 0 <= destination_column < 8:
+            self.board[destination_row][destination_column].piece = piece
+            self.board
+        else:
+            print("Invalid position")
 
-        # return True
+        return True
 
     def capture_piece(self, row, col):
         # Remove a chess piece from the board
