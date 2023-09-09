@@ -18,14 +18,6 @@ def handle_shutdown():
 
 
 if __name__=="__main__":
-    # board=ChessBoard()
-    # board.display_board(ChessBoard.WHITE)
-    # board.
-
-    # exit()
-    #Iniitialize shutdown handlers
-    # signal.signal(signal.SIGINT, handle_shutdown)
-    # signal.signal(signal.SIGTERM,handle_shutdown)
     #Starting background server to listen for challenges
     challenge_listener = Thread(target = Client.start_server,daemon=True)
     challenge_listener.start()
@@ -37,16 +29,19 @@ if __name__=="__main__":
     
     while(not MENU.exit_requested and not shutdown_received):
         try:
-            
             MENU.display()
             print(f"Your IP: {Client.ip}")
             MENU.select(input("Enter an option: "))
             error_count=0
+        except KeyboardInterrupt:
+            print("\nTerminating process...")
+            break
         except:
             error_count+=1
             if(error_count>=MAX_CONSECUTIVE_LOOP_ERRORS):
                 print("Application errored too many times. Attempting to clean up and exit..,")
                 should_exit=True
+        
     Client.shutdown_server()
     challenge_listener.join()
 
