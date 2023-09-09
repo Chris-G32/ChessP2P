@@ -85,7 +85,7 @@ class GameConnectionHandler(CancellableAction):
 
 
 class Game:
-    def __init__(self,is_host=False):
+    def __init__(self,is_host):
         if is_host:
             user_color=ChessBoard.WHITE
         else:
@@ -115,26 +115,29 @@ class Game:
     
     
     
-    def start(self,is_users_turn):
-        self.is_users_turn=is_users_turn
+    def start(self):
+        self.is_users_turn=(self.board.user_color==ChessBoard.WHITE)
         print("Starting game!!!")
         while not self.game_over:
-            while True and not self.game_over:
-                if(self.is_users_turn):
-                    message = input("Enter a message or 'exit' to exit: ")
-                    if message.lower() == 'exit':
-                        self.game_over=True
-                        continue
-                        
-                    self.connection_handler.client_socket.send(message.encode())
-                    #End turn
-                    self.is_users_turn=not self.is_users_turn
-                else:
-                    print("Wait for your opponents move...")
-                    resp=self.connection_handler.client_socket.recv(1028).decode()
-                    print(resp)
-                    self.is_users_turn=not self.is_users_turn
-                
+            self.board.display_board()
+            if(self.is_users_turn):
+                valid_move=False
+                while not valid_move:
+                    move = input("Enter your move, or 'quit' to quit")
+                    valid_move=self.board.move()
+                if move.lower() == 'quit':
+                    self.game_over=True
+                    continue
+                    
+                self.connection_handler.client_socket.send(move.encode())
+                #End turn
+                self.is_users_turn=not self.is_users_turn
+            else:
+                print("Wait for your opponents move...")
+                resp=self.connection_handler.client_socket.recv(1028).decode()
+                print(resp)
+                self.is_users_turn=not self.is_users_turn
+            
 
 
             # self.board.display_board()

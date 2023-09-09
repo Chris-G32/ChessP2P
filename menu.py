@@ -116,7 +116,7 @@ class ChallengeFriend(MenuOption):
         challenge_accepted= game.await_challenge_response(Client.PLAY_ON_PORT,Client.ip,friend_ip)
 
         if challenge_accepted:
-            game.start(True)
+            game.start()
 
     def execute(self):
         ip_to_challenge=input("Enter your friends IP address: ")
@@ -140,10 +140,10 @@ class ViewChallenges(MenuOption):
         
         return inp
     def accept_challenge(challenge:game_request):
-        game=Game()
+        game=Game(is_host=False)
         challenge_connected=game.respond_to_challenge(Client.PLAY_ON_PORT,challenge=challenge)
         if challenge_connected:
-            game.start(False)
+            game.start()
         else:
             print("Failed to accept challenge")
     def execute(self):
