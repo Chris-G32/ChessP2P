@@ -4,8 +4,16 @@ class Tile:
         self.col = col
         self.piece = piece
     def occupied(self):
-        return self.piece==None
-  
+        return self.piece!=None
+class ANSI():
+    def background(code):
+        return "\33[{code}m".format(code=code)
+ 
+    def style_text(code):
+        return "\33[{code}m".format(code=code)
+ 
+    def color_text(code):
+        return "\33[{code}m".format(code=code)  
 class ChessBoard:
     BLACK = 0
     WHITE = 1
@@ -21,7 +29,7 @@ class ChessBoard:
 
     def create_board(self):
         # Create an 8x8 chessboard using a list of lists
-        board = [[Tile(x,y) for x in range(8)] for y in range(8)]
+        board = [[Tile(row,col) for col in range(8)] for row in range(8)]
 
         # Place black pieces on the board
         board[0][0] = Tile(0, 0, Rook(ChessBoard.BLACK))
@@ -67,29 +75,41 @@ class ChessBoard:
     #             else:
     #                 rank_str+=square.piece.symbol
     #         print(rank_str)
+    def alternate_background(background):
+        if background==47:
+            background=40
+        else:background=47
+        return background
+
     def display_board(self):
         # ANSI escape codes for text color
-        red_color = "\033[91m"  # Red for black pieces
-        white_color = "\033[97m"  # White for white pieces
+        red_color = "\033[31m"  # Red for black pieces
+        blue_color = "\033[96m"  # White for white pieces
         reset_color = "\033[0m"  # Reset color to default
 
         # Define the column labels
-        column_labels = "  a b c d e f g h"
+        column_labels = "    a b c d e f g h"
 
         # Display the top border
         print("   " + "-" * 17)
 
+        white_first=True
         # Display the chessboard
         for row, rank in enumerate(self.board):
             rank_str = str(8 - row) + " |"
+            background=40
+            if white_first:
+                background=47
             for square in rank:
                 if square.piece is None:
-                    rank_str += '  '
+                    rank_str +=ANSI.background(background)+ '  '
                 else:
-                    piece_color = red_color if square.piece.get_color() == ChessBoard.BLACK else white_color
-                    rank_str += piece_color + ' ' + square.piece.symbol + reset_color
-            rank_str += " |"
+                    piece_color = red_color if square.piece.get_color() == ChessBoard.BLACK else blue_color
+                    rank_str += ANSI.background(background)+piece_color + ' ' + square.piece.symbol + reset_color
+                background=ChessBoard.alternate_background(background)
+            rank_str += ANSI.background(49)+" |"
             print(rank_str)
+            white_first=not white_first
 
         # Display the bottom border and column labels
         print("   " + "-" * 17)
@@ -126,15 +146,53 @@ class ChessBoard:
         if len(square) != 2:
             return False
         file, rank = square[0], square[1]
-        return file in 'abcdefgh' and rank in '12345678'
+        return rank in '12345678' and file in 'abcdefgh'
 
     def square_to_coordinates(self, square):
         # Convert square notation (e.g., 'e4') to row and column indices
         file, rank = square[0], square[1]
-        row = 8 - int(rank)
+        row = 8-int(rank) #Decrement here to keep in range 0-7
         col = ord(file) - ord('a')
         return row, col
 
+    def full_move_validation(self,start_tile:Tile,dest_tile:Tile):
+        #Get the piece we are moving
+        piece=start_tile.piece
+        if piece == None:
+            print(f"No piece at that starting square!")
+            return False
+        if(piece.color != self.user_color):
+            print("You can only move your own pieces!!!")
+            return False
+        if not piece.validate_move(start_tile,dest_tile):
+            return False
+        if self.path_obstructed(piece.get_piece_path(start_tile,dest_tile)):
+            print("Can't make this move, there are pieces in the way.")
+            return False
+        if dest_tile.piece!=None:
+            if dest_tile.piece.color==self.user_color:
+                print("Can't capture your own pieces!!!")
+                return False
+        return True
+    def full_move_validation_for_checks(self,start_tile:Tile,dest_tile:Tile):
+        #Get the piece we are moving
+        piece=start_tile.piece
+        if piece == None:
+            return False
+        # if(piece.color != self.user_color):
+        #     return False
+        if not piece.validate_move(start_tile,dest_tile):
+            return False
+        if self.path_obstructed(piece.get_piece_path(start_tile,dest_tile)):
+            return False
+        if dest_tile.piece!=None:
+            if dest_tile.piece.color==self.user_color:
+                return False
+        return True    
+    def make_move(self,start_tile,dest_tile):
+        self.board[dest_tile.row][dest_tile.col].piece=start_tile.piece
+        self.board[start_tile.row][start_tile.col].piece =None
+        
     def move(self, move_str):#Eg of a move is Ne4
         move_decoded = self.decode_move(move_str)
         if move_decoded is None:
@@ -142,25 +200,21 @@ class ChessBoard:
         starting_row=move_decoded['from']['row']
         starting_col=move_decoded['from']['col']
         destination_row=move_decoded['dest']['row']
-        destination_column=move_decoded['dest']['col']
+        destination_col=move_decoded['dest']['col']
         #Get tiles
         start_tile=self.board[starting_row][starting_col]
-        dest_tile=self.board[destination_row][destination_column]
-        #Get the piece we are moving
-        piece=self.board[destination_row][starting_col].piece
-        if(piece.color != self.user_color):
-            print("You can only move your own pieces!!!")
+        dest_tile=self.board[destination_row][destination_col]
+        if(self.full_move_validation(start_tile,dest_tile)==False):
             return False
-        if not piece.validate_move(self, start_tile,dest_tile):
+        #Check if move puts themself in check
+        self.make_move(start_tile,dest_tile)
+        if self.is_in_check(self.user_color):
+            print("Can't move yourself into check!")
+            #Undo move if it puts yourself in check
+            self.make_move(dest_tile,start_tile)
             return False
-
-        # Place a chess piece on the board
-        if 0 <= destination_row < 8 and 0 <= destination_column < 8:
-            self.board[destination_row][destination_column].piece = piece
-            
-        else:
-            print("Invalid position")
-              # Check if the move puts the opponent's king in check
+        
+        # Check if the move puts the opponent's king in check
         opponent_color = 1 - self.user_color
         if self.is_in_check(opponent_color):
             print("Check!")
@@ -174,16 +228,25 @@ class ChessBoard:
     def is_in_check(self, color):
         # Check if the king of the specified color is in check
         king_row, king_col = self.king_positions[color]
-
+        king_tile=self.board[king_row][king_col]
         # Iterate through all opponent's pieces and see if any can attack the king
         for row in range(8):
             for col in range(8):
-                piece = self.board[row][col].piece
+                tile=self.board[row][col]
+                piece = tile.piece
                 if piece is not None and piece.color != color:
-                    if piece.validate_move(self, row, col, king_row, king_col):
+                    if self.full_move_validation_for_checks(tile,king_tile):
                         return True
         return False
-
+    #Takes a list of x and y's to conver to tiles
+    def path_obstructed(self,crossed_tiles:list):
+        if len(crossed_tiles)==0:
+            return False
+        for i in crossed_tiles:
+            tile=self.board[i['row']][i['col']]
+            if tile.occupied():
+                return True
+        return False
     def capture_piece(self, row, col):
         # Remove a chess piece from the board
         if 0 <= row < 8 and 0 <= col < 8:
@@ -216,7 +279,7 @@ class Pawn(Piece):
         self.symbol = 'P'
     def validate_move(self,current:Tile,new:Tile):
         # Calculate the direction of movement based on pawn color
-        direction = 1 if self.color == ChessBoard.WHITE else -1
+        direction = -1 if self.color == ChessBoard.WHITE else 1
 
         # Check if the move is within the bounds of the board
         if new.row < 0 or new.row > 7 or new.col < 0 or new.col > 7:
@@ -254,14 +317,14 @@ class Rook(Piece):
             diff_y = abs(dest.col - start.col)
 
             for i in range(1, diff_y):  # Exclude start and end
-                path.append({'x': start.row, 'y': start.col + i * dir_y})
+                path.append({'row': start.row, 'col': start.col + i * dir_y})
 
         elif start.col == dest.col:  # Horizontal move
             dir_x = 1 if start.row < dest.row else -1
             diff_x = abs(dest.row - start.row)
 
             for i in range(1, diff_x):  # Exclude start and end
-                path.append({'x': start.row + i * dir_x, 'y': start.col})
+                path.append({'row': start.row + i * dir_x, 'col': start.col})
 
         else:
             print("Failed rook get piece path")
@@ -285,8 +348,6 @@ class Knight(Piece):
         col_diff = abs(dest.col - start.col)
         return (row_diff == 2 and col_diff == 1) or (row_diff == 1 and col_diff == 2)
 
-
-
 class Bishop(Piece):
     def __init__(self, color):
         super().__init__(color)
@@ -297,7 +358,21 @@ class Bishop(Piece):
         row_diff = abs(dest.row - start.row)
         col_diff = abs(dest.col - start.col)
         return row_diff == col_diff
+    
+    def get_piece_path(self, start: Tile, dest: Tile):
+        path = []
 
+        # Calculate the direction for row and column
+        row_dir = 1 if dest.row > start.row else -1
+        col_dir = 1 if dest.col > start.col else -1
+
+        # Determine the number of iterations (squares to move diagonally)
+        num_iterations = abs(dest.row - start.row)
+
+        for i in range(1, num_iterations):
+            path.append({'row': start.row + i * row_dir, 'col': start.col + i * col_dir})
+
+        return path
 class Queen(Piece):
     def __init__(self, color):
         super().__init__(color)
@@ -310,7 +385,42 @@ class Queen(Piece):
         row_diff = abs(dest.row - start.row)
         col_diff = abs(dest.col - start.col)
         return row_diff == col_diff
+    def get_piece_path(self, start: Tile, dest: Tile):
+        path = []
+        #Rook like
+        if start.row == dest.row or start.col == dest.col:
+            # Calculate the direction and number of iterations based on the move direction
+            if start.row == dest.row:  # Vertical move
+                dir_y = 1 if start.col < dest.col else -1
+                diff_y = abs(dest.col - start.col)
 
+                for i in range(1, diff_y):  # Exclude start and end
+                    path.append({'row': start.row, 'col': start.col + i * dir_y})
+
+            elif start.col == dest.col:  # Horizontal move
+                dir_x = 1 if start.row < dest.row else -1
+                diff_x = abs(dest.row - start.row)
+
+                for i in range(1, diff_x):  # Exclude start and end
+                    path.append({'row': start.row + i * dir_x, 'col': start.col})
+
+            else:
+                print("Failed queen get piece path")
+                raise Exception
+        #Bishop like
+        else: 
+            # Calculate the direction for row and column
+            row_dir = 1 if dest.row > start.row else -1
+            col_dir = 1 if dest.col > start.col else -1
+
+            # Determine the number of iterations (squares to move diagonally)
+            num_iterations = abs(dest.row - start.row)
+
+            for i in range(1, num_iterations):
+                path.append({'row': start.row + i * row_dir, 'col': start.col + i * col_dir})
+            pass
+        return path
+    
 class King(Piece):
     def __init__(self, color):
         super().__init__(color)
@@ -321,3 +431,4 @@ class King(Piece):
         if row_diff<=1 and col_diff<=1:
             return True
         return False
+    
