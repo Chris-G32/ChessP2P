@@ -39,7 +39,7 @@ class GameConnectionHandler(CancellableAction):
             if(client_address[0]==friend and not self.is_cancelled()):
                 self.active_connection=True
                 self.client_socket=client_socket
-                print("Match connection succeeded. Enter anything to continue...")
+                print("\nMatch connection succeeded. Enter anything to continue...")
                 return                   
             else:
                 if client_socket:
@@ -123,7 +123,7 @@ class Game:
             if(self.is_users_turn):
                 valid_move=False
                 while not valid_move:
-                    move = input("Enter your move, or 'quit' to quit")
+                    move = input("Enter your move, or 'quit' to quit: ")
                     
                     if move.lower() == 'quit':
                         self.game_over=True
