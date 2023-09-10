@@ -1,7 +1,7 @@
 class Tile:
-    def __init__(self, x, y, piece=None):
-        self.x = x
-        self.y = y
+    def __init__(self, row, col, piece=None):
+        self.row = row
+        self.col = col
         self.piece = piece
     def occupied(self):
         return self.piece==None
@@ -203,7 +203,7 @@ class Piece:
         Returns a list of dicts of x,y to check representing tiles
     """
     def get_piece_path(self,start:Tile,dest:Tile):
-        return [dest]
+        return []
     def get_color(self):
         return self.color
 
@@ -219,22 +219,22 @@ class Pawn(Piece):
         direction = 1 if self.color == ChessBoard.WHITE else -1
 
         # Check if the move is within the bounds of the board
-        if new.x < 0 or new.x > 7 or new.y < 0 or new.y > 7:
+        if new.row < 0 or new.row > 7 or new.col < 0 or new.col > 7:
             return False
 
         # Pawn's initial double move
-        if current.x == 1 and new.x == 3 and direction == 1 and current.y == new.y:
+        if current.row == 1 and new.row == 3 and direction == 1 and current.col == new.col:
             return not new.occupied() #Allowed if free space
-        if current.x == 6 and new.x == 4 and direction == -1 and current.y == new.y:
+        if current.row == 6 and new.row == 4 and direction == -1 and current.col == new.col:
             return not new.occupied() #Allowed if free space
 
         # Regular pawn move (one square forward)
-        if new.x == current.x + direction and new.y == current.y:
+        if new.row == current.row + direction and new.col == current.col:
             return not new.occupied() #Allowed if free space
 
         # Pawn capture (diagonal)
-        if (new.x == current.x + direction and
-            (new.y == current.y + 1 or new.y == current.y - 1)):
+        if (new.row == current.row + direction and
+            (new.col == current.col + 1 or new.col == current.col - 1)):
             return new.occupied()
         
         # Invalid move
@@ -249,19 +249,19 @@ class Rook(Piece):
         path = []
 
         # Calculate the direction and number of iterations based on the move direction
-        if start.x == dest.x:  # Vertical move
-            dir_y = 1 if start.y < dest.y else -1
-            diff_y = abs(dest.y - start.y)
+        if start.row == dest.row:  # Vertical move
+            dir_y = 1 if start.col < dest.col else -1
+            diff_y = abs(dest.col - start.col)
 
             for i in range(1, diff_y):  # Exclude start and end
-                path.append({'x': start.x, 'y': start.y + i * dir_y})
+                path.append({'x': start.row, 'y': start.col + i * dir_y})
 
-        elif start.y == dest.y:  # Horizontal move
-            dir_x = 1 if start.x < dest.x else -1
-            diff_x = abs(dest.x - start.x)
+        elif start.col == dest.col:  # Horizontal move
+            dir_x = 1 if start.row < dest.row else -1
+            diff_x = abs(dest.row - start.row)
 
             for i in range(1, diff_x):  # Exclude start and end
-                path.append({'x': start.x + i * dir_x, 'y': start.y})
+                path.append({'x': start.row + i * dir_x, 'y': start.col})
 
         else:
             print("Failed rook get piece path")
@@ -271,7 +271,7 @@ class Rook(Piece):
         
     def validate_move(self,start:Tile,dest:Tile):
         # Rook move validation
-        if start.x == dest.x or start.y == dest.y:
+        if start.row == dest.row or start.col == dest.col:
             return True
         return False
         
@@ -279,18 +279,45 @@ class Knight(Piece):
     def __init__(self, color):
         super().__init__(color)
         self.symbol = 'N'
+    def validate_move(self,start:Tile,dest:Tile):
+        # Knight move validation
+        row_diff = abs(dest.row - start.row)
+        col_diff = abs(dest.col - start.col)
+        return (row_diff == 2 and col_diff == 1) or (row_diff == 1 and col_diff == 2)
+
+
 
 class Bishop(Piece):
     def __init__(self, color):
         super().__init__(color)
         self.symbol = 'B'
 
+    def validate_move(self, start:Tile,dest:Tile):
+        # Bishop move validation
+        row_diff = abs(dest.row - start.row)
+        col_diff = abs(dest.col - start.col)
+        return row_diff == col_diff
+
 class Queen(Piece):
     def __init__(self, color):
         super().__init__(color)
         self.symbol = 'Q'
 
+    def validate_move(self, start:Tile,dest:Tile):
+        # Queen move validation (combines Rook and Bishop moves)
+        if start.row == dest.row or start.col == dest.col:
+            return True
+        row_diff = abs(dest.row - start.row)
+        col_diff = abs(dest.col - start.col)
+        return row_diff == col_diff
+
 class King(Piece):
     def __init__(self, color):
         super().__init__(color)
         self.symbol = 'K'
+    def validate_move(self, start:Tile,dest:Tile):
+        row_diff = abs(dest.row - start.row)
+        col_diff = abs(dest.col - start.col)
+        if row_diff<=1 and col_diff<=1:
+            return True
+        return False
