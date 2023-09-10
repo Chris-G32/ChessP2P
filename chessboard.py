@@ -246,47 +246,35 @@ class Rook(Piece):
         self.symbol = 'R'
     
     def get_piece_path(self,start:Tile,dest:Tile):
-        path=[]
-        if start.x == dest.x: #If vertical move
-            #Add or subtract to get next space from start
-            dir=-1
-            if start.y<dest.y:
-                dir=1
-            #Number of iterations    
-            diff=abs(dest.y-start.y)
-            #Gets path of piece, excluding start and end
-            for i in range(diff):
-                if i==0:#Ignore start tile
-                    continue
-                #Does not need to return 
-                coords={'x':start.x, 'y':start.y+(i*dir)}
-                path.append(coords)
+        path = []
 
-        elif start.y == dest.y: #If horizontal move
-            #Add or subtract to get next space from start
-            dir=-1
-            if start.x<dest.x:
-                dir=1
-            #Number of iterations    
-            diff=abs(dest.x-start.x)
-            #Gets path of piece, excluding start and end
-            for i in range(diff):
-                if i==0:#Ignore start tile
-                    continue
-                #Does not need to return 
-                coords={'x':start.x+(i*dir), 'y':start.y}
-                path.append(coords)
-            pass
+        # Calculate the direction and number of iterations based on the move direction
+        if start.x == dest.x:  # Vertical move
+            dir_y = 1 if start.y < dest.y else -1
+            diff_y = abs(dest.y - start.y)
+
+            for i in range(1, diff_y):  # Exclude start and end
+                path.append({'x': start.x, 'y': start.y + i * dir_y})
+
+        elif start.y == dest.y:  # Horizontal move
+            dir_x = 1 if start.x < dest.x else -1
+            diff_x = abs(dest.x - start.x)
+
+            for i in range(1, diff_x):  # Exclude start and end
+                path.append({'x': start.x + i * dir_x, 'y': start.y})
+
         else:
             print("Failed rook get piece path")
             raise Exception
+
+        return path
         
-
-        return [dest]
-    
-    def validate_move():
-
-        return 
+    def validate_move(self,start:Tile,dest:Tile):
+        # Rook move validation
+        if start.x == dest.x or start.y == dest.y:
+            return True
+        return False
+        
 class Knight(Piece):
     def __init__(self, color):
         super().__init__(color)
