@@ -143,20 +143,46 @@ class ChessBoard:
         starting_col=move_decoded['from']['col']
         destination_row=move_decoded['dest']['row']
         destination_column=move_decoded['dest']['col']
-        piece=self.board[starting_row][starting_col].piece
+        #Get tiles
+        start_tile=self.board[starting_row][starting_col]
+        dest_tile=self.board[destination_row][destination_column]
+        #Get the piece we are moving
+        piece=self.board[destination_row][starting_col].piece
         if(piece.color != self.user_color):
             print("You can only move your own pieces!!!")
             return False
-        if(not piece.validate_move()):
+        if not piece.validate_move(self, start_tile,dest_tile):
             return False
+
         # Place a chess piece on the board
         if 0 <= destination_row < 8 and 0 <= destination_column < 8:
             self.board[destination_row][destination_column].piece = piece
-            self.board
+            
         else:
             print("Invalid position")
-
+              # Check if the move puts the opponent's king in check
+        opponent_color = 1 - self.user_color
+        if self.is_in_check(opponent_color):
+            print("Check!")
         return True
+    
+    def update_king_position(self, color, row, col):
+        # Update the position of the king for the specified color
+        if self.board[row][col].piece.symbol == 'K':
+            self.king_positions[color] = (row, col)
+
+    def is_in_check(self, color):
+        # Check if the king of the specified color is in check
+        king_row, king_col = self.king_positions[color]
+
+        # Iterate through all opponent's pieces and see if any can attack the king
+        for row in range(8):
+            for col in range(8):
+                piece = self.board[row][col].piece
+                if piece is not None and piece.color != color:
+                    if piece.validate_move(self, row, col, king_row, king_col):
+                        return True
+        return False
 
     def capture_piece(self, row, col):
         # Remove a chess piece from the board
@@ -172,7 +198,12 @@ class Piece:
     def validate_move():
         print("VALIDATION NOT IMPLEMENTED")
         return False
-
+    #Defaults to piece is not obstructed and the only spot it has to go is its dest
+    """In all inherited classes, this is only to be called after validation, other wise the logic will not work
+        Returns a list of dicts of x,y to check representing tiles
+    """
+    def get_piece_path(self,start:Tile,dest:Tile):
+        return [dest]
     def get_color(self):
         return self.color
 
@@ -213,7 +244,49 @@ class Rook(Piece):
     def __init__(self, color):
         super().__init__(color)
         self.symbol = 'R'
+    
+    def get_piece_path(self,start:Tile,dest:Tile):
+        path=[]
+        if start.x == dest.x: #If vertical move
+            #Add or subtract to get next space from start
+            dir=-1
+            if start.y<dest.y:
+                dir=1
+            #Number of iterations    
+            diff=abs(dest.y-start.y)
+            #Gets path of piece, excluding start and end
+            for i in range(diff):
+                if i==0:#Ignore start tile
+                    continue
+                #Does not need to return 
+                coords={'x':start.x, 'y':start.y+(i*dir)}
+                path.append(coords)
 
+        elif start.y == dest.y: #If horizontal move
+            #Add or subtract to get next space from start
+            dir=-1
+            if start.x<dest.x:
+                dir=1
+            #Number of iterations    
+            diff=abs(dest.x-start.x)
+            #Gets path of piece, excluding start and end
+            for i in range(diff):
+                if i==0:#Ignore start tile
+                    continue
+                #Does not need to return 
+                coords={'x':start.x+(i*dir), 'y':start.y}
+                path.append(coords)
+            pass
+        else:
+            print("Failed rook get piece path")
+            raise Exception
+        
+
+        return [dest]
+    
+    def validate_move():
+
+        return 
 class Knight(Piece):
     def __init__(self, color):
         super().__init__(color)
