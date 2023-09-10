@@ -192,7 +192,47 @@ class ChessBoard:
     def make_move(self,start_tile,dest_tile):
         self.board[dest_tile.row][dest_tile.col].piece=start_tile.piece
         self.board[start_tile.row][start_tile.col].piece =None
-        
+    
+    
+    def is_checkmate_or_stalemate(self):
+        # Check if the current player is in check
+        if self.is_in_check(self.user_color):
+            # Check if the current player has any legal moves left
+            for row in range(8):
+                for col in range(8):
+                    start_tile = self.board[row][col]
+                    if start_tile.piece is not None and start_tile.piece.color == self.user_color:
+                        for dest_row in range(8):
+                            for dest_col in range(8):
+                                dest_tile = self.board[dest_row][dest_col]
+                                if self.full_move_validation(start_tile, dest_tile):
+                                    # Try making the move and see if it puts the king out of check
+                                    self.make_move(start_tile, dest_tile)
+                                    if not self.is_in_check(self.user_color):
+                                        # The player has at least one legal move, so it's not checkmate
+                                        self.make_move(dest_tile, start_tile)  # Undo the move
+                                        return None
+
+            return "CM"  # If the player is in check and has no legal moves, it's checkmate
+
+        # Check if the current player has any legal moves left
+        for row in range(8):
+            for col in range(8):
+                start_tile = self.board[row][col]
+                if start_tile.piece is not None and start_tile.piece.color == self.user_color:
+                    for dest_row in range(8):
+                        for dest_col in range(8):
+                            dest_tile = self.board[dest_row][dest_col]
+                            if self.full_move_validation(start_tile, dest_tile):
+                                # Try making the move and see if it puts the opponent's king in check
+                                self.make_move(start_tile, dest_tile)
+                                if not self.is_in_check(1 - self.user_color):
+                                    # The player has at least one legal move, so it's not stalemate
+                                    self.make_move(dest_tile, start_tile)  # Undo the move
+                                    return None
+
+        return "SM"  # If the player is not in check and has no legal moves, it's stalemate
+ 
     def move(self, move_str,receiving_move=False):#Eg of a move is Ne4
         
         move_decoded = self.decode_move(move_str)

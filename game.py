@@ -113,7 +113,16 @@ class Game:
     def respond_to_challenge(self,port:str,challenge:game_request):
         return self.connection_handler.attempt_connection_to_server(port,challenge)
     
-    
+    def check_for_game_over(self,is_mate_loss:bool):
+        board_state=self.board.is_checkmate_or_stalemate()
+        if board_state==None:
+                pass
+        elif board_state=="CM":
+            self.game_over=True
+            print("Checkmate! You lose")
+        elif board_state=="SM":
+            self.game_over=True
+            print("Stalemate! It's a tie")
     
     def start(self):
         self.is_users_turn=(self.board.user_color==ChessBoard.WHITE)
@@ -138,8 +147,12 @@ class Game:
                 resp=self.connection_handler.client_socket.recv(1028).decode()
                 print(resp)
                 self.board.move(resp,True)
+                self.check_for_game_over()
                 self.is_users_turn=not self.is_users_turn
+            if self.game_over==False:
+                self.check_for_game_over()
             self.board.display_board()
+            
             
 
 
