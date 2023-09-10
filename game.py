@@ -127,7 +127,7 @@ class Game:
                     
                     if move.lower() == 'quit':
                         self.game_over=True
-                        continue
+                        break
                     valid_move=self.board.move(move)
                     
                 self.connection_handler.client_socket.send(move.encode())
