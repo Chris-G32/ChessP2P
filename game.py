@@ -117,9 +117,9 @@ class Game:
     
     def start(self):
         self.is_users_turn=(self.board.user_color==ChessBoard.WHITE)
+        self.board.display_board()
         print("Starting game!!!")
         while not self.game_over:
-            self.board.display_board()
             if(self.is_users_turn):
                 valid_move=False
                 while not valid_move:
@@ -139,6 +139,7 @@ class Game:
                 print(resp)
                 self.board.move(resp)
                 self.is_users_turn=not self.is_users_turn
+            self.board.display_board()
             
 
 
