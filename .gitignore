@@ -51,3 +51,4 @@ docs/_build/
 
 #My stuff
 invalid_requests.log
+*.pyc

@@ -193,7 +193,8 @@ class ChessBoard:
         self.board[dest_tile.row][dest_tile.col].piece=start_tile.piece
         self.board[start_tile.row][start_tile.col].piece =None
         
-    def move(self, move_str):#Eg of a move is Ne4
+    def move(self, move_str,receiving_move=False):#Eg of a move is Ne4
+        
         move_decoded = self.decode_move(move_str)
         if move_decoded is None:
             return False
@@ -201,9 +202,13 @@ class ChessBoard:
         starting_col=move_decoded['from']['col']
         destination_row=move_decoded['dest']['row']
         destination_col=move_decoded['dest']['col']
+        
         #Get tiles
         start_tile=self.board[starting_row][starting_col]
         dest_tile=self.board[destination_row][destination_col]
+        if receiving_move:
+            self.make_move(start_tile,dest_tile)
+            return True
         if(self.full_move_validation(start_tile,dest_tile)==False):
             return False
         #Check if move puts themself in check

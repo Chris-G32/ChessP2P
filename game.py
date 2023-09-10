@@ -124,10 +124,11 @@ class Game:
                 valid_move=False
                 while not valid_move:
                     move = input("Enter your move, or 'quit' to quit")
-                    valid_move=self.board.move()
-                if move.lower() == 'quit':
-                    self.game_over=True
-                    continue
+                    
+                    if move.lower() == 'quit':
+                        self.game_over=True
+                        continue
+                    valid_move=self.board.move(move)
                     
                 self.connection_handler.client_socket.send(move.encode())
                 #End turn
@@ -136,6 +137,7 @@ class Game:
                 print("Wait for your opponents move...")
                 resp=self.connection_handler.client_socket.recv(1028).decode()
                 print(resp)
+                self.board.move(resp)
                 self.is_users_turn=not self.is_users_turn
             
 
