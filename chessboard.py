@@ -186,7 +186,7 @@ class ChessBoard:
         if self.path_obstructed(piece.get_piece_path(start_tile,dest_tile)):
             return False
         if dest_tile.piece!=None:
-            if dest_tile.piece.color==self.user_color:
+            if dest_tile.piece.color==piece.color:
                 return False
         return True    
     def make_move(self,start_tile,dest_tile):
@@ -213,6 +213,7 @@ class ChessBoard:
             return False
         #Check if move puts themself in check
         self.make_move(start_tile,dest_tile)
+        #This logic has a bug somewhere where check is not properly registered
         if self.is_in_check(self.user_color):
             print("Can't move yourself into check!")
             #Undo move if it puts yourself in check
