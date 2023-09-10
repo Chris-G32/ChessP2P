@@ -137,7 +137,7 @@ class Game:
                 print("Wait for your opponents move...")
                 resp=self.connection_handler.client_socket.recv(1028).decode()
                 print(resp)
-                self.board.move(resp)
+                self.board.move(resp,True)
                 self.is_users_turn=not self.is_users_turn
             self.board.display_board()
             
