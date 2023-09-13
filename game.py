@@ -113,21 +113,27 @@ class Game:
     def respond_to_challenge(self,port:str,challenge:game_request):
         return self.connection_handler.attempt_connection_to_server(port,challenge)
     
-    def check_for_game_over(self,is_mate_loss:bool):
-        board_state=self.board.is_checkmate_or_stalemate()
-        if board_state==None:
-                pass
+    def is_game_over(self,mate_is_loss:bool):
+        board_state=self.board.is_checkmate_or_stalemate(self.board.user_color)
+        result_msg=""
+        if board_state is None:
+            return False
         elif board_state=="CM":
-            self.game_over=True
-            print("Checkmate! You lose")
+            result_msg="Checkmate! "
+            if(mate_is_loss):
+                result_msg+="You lose :("
+            else:
+                result_msg+="You win!!!"
         elif board_state=="SM":
-            self.game_over=True
-            print("Stalemate! It's a tie")
-    
+           result_msg="Stalemate... Awkkkwarddddd..."
+        
+        print(result_msg)
+        return True
     def start(self):
         self.is_users_turn=(self.board.user_color==ChessBoard.WHITE)
         self.board.display_board()
         print("Starting game!!!")
+
         while not self.game_over:
             if(self.is_users_turn):
                 valid_move=False
@@ -138,8 +144,17 @@ class Game:
                         self.game_over=True
                         break
                     valid_move=self.board.move(move)
+                #Once again check if game is over
+                if self.is_game_over(mate_is_loss=False):
+                    self.game_over=True
                     
-                self.connection_handler.client_socket.send(move.encode())
+                self.connection_handler.client_socket.settimeout(30)
+                try:
+                    self.connection_handler.client_socket.send(move.encode())
+                except TimeoutError:
+                    print("Error! Connection timed out. Game over...")
+                    return
+                self.connection_handler.client_socket.settimeout(None)
                 #End turn
                 self.is_users_turn=not self.is_users_turn
             else:
@@ -147,10 +162,11 @@ class Game:
                 resp=self.connection_handler.client_socket.recv(1028).decode()
                 print(resp)
                 self.board.move(resp,True)
-                self.check_for_game_over()
+                #Check if the last move you received ended your game
+                if self.is_game_over(mate_is_loss=True):
+                    self.game_over=True
                 self.is_users_turn=not self.is_users_turn
-            if self.game_over==False:
-                self.check_for_game_over()
+            
             self.board.display_board()
             
             

@@ -1,24 +1,38 @@
-import collections
-import json
+import chessboard
 
-data=collections.deque(maxlen=10)
-class tmp:
-    def __init__(self):
-        self.a='g'
-        self.b='h'
-a=tmp()
-a_dict=a.__dict__
-s=json.dumps(a_dict)
-print(s)
-# for i in range(15):
-#     data.append(i)
-
-# remove_candidates=[]
-# for i in data:
-#     if i ==11:
-#         remove_candidates.append(i)
-#     print(i)
-# for i in remove_candidates:
-#     data.remove(i)
-
-# print(data[2])
+board_1=chessboard.ChessBoard(chessboard.ChessBoard.WHITE)
+board_2=chessboard.ChessBoard(chessboard.ChessBoard.BLACK)
+board_1.display_board()
+while True:
+    move_1_valid=False
+    move_1=""
+    while move_1_valid==False:
+        move_1=input("enter move for white: ")
+        move_1_valid=board_1.move(move_1)
+    board_2.move(move_1,True)
+    state=board_2.is_checkmate_or_stalemate(board_2.user_color)
+    # print(state)
+    board_2.display_board()
+    if state=="CM":
+        print("Checkmate! White wins")
+        exit()
+    elif state=="SM":
+        print("Stalemate")
+        exit()
+    
+    move_2_valid=False
+    move_2=""
+    while move_2_valid==False:
+        move_2=input("enter move for black: ")
+        move_2_valid=board_2.move(move_2)
+    board_1.move(move_2,True)
+    state=board_1.is_checkmate_or_stalemate(board_1.user_color)
+    board_1.display_board()
+    
+    # print(state)
+    if state=="CM":
+        print("Checkmate! Black wins")
+        exit()
+    elif state=="SM":
+        print("Stalemate")
+        exit()

@@ -1,5 +1,5 @@
 class Tile:
-    def __init__(self, row, col, piece=None):
+    def __init__(self, row, col=None, piece=None):
         self.row = row
         self.col = col
         self.piece = piece
@@ -25,7 +25,8 @@ class ChessBoard:
             ChessBoard.WHITE: (7, 4),  # White king starts at e1
             ChessBoard.BLACK: (0, 4),  # Black king starts at e8
         }
-        self.is_check = False
+      
+        self.piece_dict={ChessBoard.WHITE:[],ChessBoard.BLACK:[]}
 
     def create_board(self):
         # Create an 8x8 chessboard using a list of lists
@@ -175,6 +176,8 @@ class ChessBoard:
                 return False
         return True
     def full_move_validation_for_checks(self,start_tile:Tile,dest_tile:Tile):
+        if(dest_tile is None):
+            return False
         #Get the piece we are moving
         piece=start_tile.piece
         if piece == None:
@@ -193,45 +196,139 @@ class ChessBoard:
         self.board[dest_tile.row][dest_tile.col].piece=start_tile.piece
         self.board[start_tile.row][start_tile.col].piece =None
     
+    #Returns none when it is invalid row and col
+    def get_tile(self,row,col):
+        if(not(row<8 and row>0 and col<8 and col>0)):
+            return None
+        return self.board[row][col]
+    def king_can_move(self,color):
+        #Get kings tile
+        user_king_pos=self.king_positions[color]
+        king_tile=self.get_tile(user_king_pos[1],user_king_pos[2]) 
+
+        start_tile=king_tile
+        #Check all possible king moves
+        for i in range(-1,2): #-1 through 1
+            for j in range(-1,2):
+                #Don't check the case where king is stationary
+                if i==0 and j==0:
+                    continue
+                #Get destination tile
+                dest_tile=self.get_tile(start_tile.row+i,start_tile.col+j)
+                #Ignores invalid destination
+                if dest_tile==None:
+                    continue
+                #Check if the tile is occupied by a piece
+                if dest_tile.occupied():
+                    #If its your piece ignore this move, this move is not valid
+                    if dest_tile.piece.color==color:
+                        continue
+                #Make the move
+                self.make_move(start_tile,dest_tile)
+                self.update_king_position(color,dest_tile.row,dest_tile.col)
+
+                #Evaluate board state
+                is_check=self.is_in_check(color)
+
+                #Restore true board state
+                self.make_move(dest_tile,start_tile)
+                self.update_king_position(color,start_tile.row,start_tile.col)
+
+                #If king can move we know it is neither checkmate or stalemate
+                if not is_check:
+                    return True
+        return False
     
-    def is_checkmate_or_stalemate(self):
-        # Check if the current player is in check
-        if self.is_in_check(self.user_color):
-            # Check if the current player has any legal moves left
-            for row in range(8):
-                for col in range(8):
-                    start_tile = self.board[row][col]
-                    if start_tile.piece is not None and start_tile.piece.color == self.user_color:
-                        for dest_row in range(8):
-                            for dest_col in range(8):
-                                dest_tile = self.board[dest_row][dest_col]
-                                if self.full_move_validation(start_tile, dest_tile):
-                                    # Try making the move and see if it puts the king out of check
-                                    self.make_move(start_tile, dest_tile)
-                                    if not self.is_in_check(self.user_color):
-                                        # The player has at least one legal move, so it's not checkmate
-                                        self.make_move(dest_tile, start_tile)  # Undo the move
-                                        return None
-
-            return "CM"  # If the player is in check and has no legal moves, it's checkmate
-
-        # Check if the current player has any legal moves left
+    def non_king_can_move(self,color):
         for row in range(8):
             for col in range(8):
-                start_tile = self.board[row][col]
-                if start_tile.piece is not None and start_tile.piece.color == self.user_color:
-                    for dest_row in range(8):
-                        for dest_col in range(8):
-                            dest_tile = self.board[dest_row][dest_col]
-                            if self.full_move_validation(start_tile, dest_tile):
-                                # Try making the move and see if it puts the opponent's king in check
-                                self.make_move(start_tile, dest_tile)
-                                if not self.is_in_check(1 - self.user_color):
-                                    # The player has at least one legal move, so it's not stalemate
-                                    self.make_move(dest_tile, start_tile)  # Undo the move
-                                    return None
+                start_tile = self.get_tile(row,col)
+                #Check valid tile
+                if start_tile is None:
+                    continue
+                #Check there is a piece to move
+                if start_tile.piece is None:
+                    continue
+                #Check the color is of the same as the desired color to test
+                if start_tile.piece.color !=color:
+                    continue
+                #Test all destination squares
+                for dest_row in range(8):
+                    for dest_col in range(8):
+                        dest_tile = self.get_tile(dest_row,dest_col)
+                        if self.full_move_validation_for_checks(start_tile, dest_tile):
+                            # Try making the move and see if it puts the king out of check
+                            self.make_move(start_tile, dest_tile)
+                            #Are we in check now?
+                            in_check=self.is_in_check(color)
+                            #Restore board state
+                            self.make_move(dest_tile, start_tile)
+                            #Return true if we aren't in check
+                            if in_check==False:
+                                return True
+        return False
+        
+    #Currently just brute force checks, candidate to optimize later
+    def is_any_move_possible(self,color):
+        #Now check non king moves
+        if self.non_king_can_move(color):
+            return True
+        return False
+    
+    def is_checkmate_or_stalemate(self,color):
+        #Check if we are in check right now
+        is_in_check=self.is_in_check(color)
 
-        return "SM"  # If the player is not in check and has no legal moves, it's stalemate
+        #Check if we can move
+        can_move=self.is_any_move_possible(color)
+
+        #If we can move its not checkmate or stalemate
+        if(can_move==True):
+            return None
+        #Reaching here means we cant move, so check if we are in check, if so it is mate
+        if is_in_check ==True:
+            return "CM"
+        #If its not mate and we can't move then it must be a draw
+        if is_in_check==False:
+            return "SM"
+
+        # # Check if the current player is in check
+        # if self.is_in_check(color):
+        #     # Check if the current player has any legal moves left
+        #     for row in range(8):
+        #         for col in range(8):
+        #             start_tile = self.board[row][col]
+        #             if start_tile.piece is not None and start_tile.piece.color == color: #Check all moves that the player could make
+        #                 for dest_row in range(8):
+        #                     for dest_col in range(8):
+        #                         dest_tile = self.board[dest_row][dest_col]
+        #                         if self.full_move_validation(start_tile, dest_tile):
+        #                             # Try making the move and see if it puts the king out of check
+        #                             self.make_move(start_tile, dest_tile)
+        #                             if not self.is_in_check(color):
+        #                                 # The player has at least one legal move, so it's not checkmate
+        #                                 self.make_move(dest_tile, start_tile)  # Undo the move
+        #                                 return None
+
+        #     return "CM"  # If the player is in check and has no legal moves, it's checkmate
+
+        # # Check if the current player has any legal moves left
+        # for row in range(8):
+        #     for col in range(8):
+        #         start_tile = self.board[row][col]
+        #         if start_tile.piece is not None and start_tile.piece.color == self.user_color:
+        #             for dest_row in range(8):
+        #                 for dest_col in range(8):
+        #                     dest_tile = self.board[dest_row][dest_col]
+        #                     if self.full_move_validation(start_tile, dest_tile):
+        #                         # Try making the move and see if it puts the opponent's king in check
+        #                         self.make_move(start_tile, dest_tile)
+        #                         if not self.is_in_check(1 - self.user_color):
+        #                             # The player has at least one legal move, so it's not stalemate
+        #                             self.make_move(dest_tile, start_tile)  # Undo the move
+        #                             return None
+
+        # return "SM"  # If the player is not in check and has no legal moves, it's stalemate
  
     def move(self, move_str,receiving_move=False):#Eg of a move is Ne4
         
@@ -255,9 +352,11 @@ class ChessBoard:
         self.make_move(start_tile,dest_tile)
         #This logic has a bug somewhere where check is not properly registered
         if self.is_in_check(self.user_color):
+            self.update_king_position(self.user_color)
             print("Can't move yourself into check!")
             #Undo move if it puts yourself in check
             self.make_move(dest_tile,start_tile)
+            self.update_king_position(self.user_color)
             return False
         
         # Check if the move puts the opponent's king in check
@@ -271,6 +370,7 @@ class ChessBoard:
         if self.board[row][col].piece.symbol == 'K':
             self.king_positions[color] = (row, col)
 
+    #Currently can't move king out of check properly
     def is_in_check(self, color):
         # Check if the king of the specified color is in check
         king_row, king_col = self.king_positions[color]
@@ -471,6 +571,7 @@ class King(Piece):
     def __init__(self, color):
         super().__init__(color)
         self.symbol = 'K'
+        self.has_moved=False
     def validate_move(self, start:Tile,dest:Tile):
         row_diff = abs(dest.row - start.row)
         col_diff = abs(dest.col - start.col)
