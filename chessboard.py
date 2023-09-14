@@ -199,7 +199,7 @@ class ChessBoard:
     
     #Returns none when it is invalid row and col
     def get_tile(self,row,col):
-        if(not(row<8 and row>0 and col<8 and col>0)):
+        if(not(row<8 and row>=0 and col<8 and col>=0)):
             return None
         return self.board[row][col]
     def king_can_move(self,color):
@@ -301,14 +301,14 @@ class ChessBoard:
             return "QC"
         return None
     
-    def validate_castle(self,king:Tile,rook:Tile,type):
+    def validate_castle(self,king:Tile,rook:Tile,type,color):
         king_start={"row":king.row,"col":king.col}
         if king.piece is None or rook.piece is None:
             return False
         #Check our pieces are actually king and rooks
         if not (isinstance(rook.piece,Rook) and isinstance(king.piece,King)):
             return False
-        if rook.has_moved or king.has_moved:
+        if rook.piece.has_moved or king.piece.has_moved:
             return False
         iterate_over=None
         if type=="QC":
@@ -317,43 +317,70 @@ class ChessBoard:
             iterate_over=range(king.col+1,7)
             pass
         failed_castle=False
-        
+        move_from=king
+        move_to=None
         #Check if king is safe in the intermediate squares and they arent occupied
         for i in iterate_over:
-            tile=self.get_tile(king.row,i)
-            if(tile.occupied()):
+            move_to=self.get_tile(king.row,i)
+            if(move_to.occupied()):
                 failed_castle=True
                 break
-            self.make_move(king.row,i)
+            self.make_move(move_from,move_to)
+            move_from=move_to
+            if(self.is_in_check(color)):
+                failed_castle=True
+                break
+        
         #Reset king to its true spot instead of its intermediary check spots
-        if failed_castle:
-            self.make_move()
-
-                
-            
-            
+        self.make_move(move_from,self.get_tile(king_start['row'],king_start['col']))
+        return failed_castle
 
 
-    def handle_castle(self,castle_type):
+    def handle_castle(self,castle_type,receiving:bool):
+        color=self.user_color
+        if receiving:
+            if color==ChessBoard.WHITE:
+                color=ChessBoard.BLACK
+            else:
+                color=ChessBoard.WHITE
         row=0
-        if self.user_color==ChessBoard.WHITE:
+        if color==ChessBoard.WHITE:
             row=7
         king_tile=self.get_tile(row,ord("e")-ord("a"))
+        king_dest_col=None
         if(castle_type=="QC"):
             rook_tile=self.get_tile(row,0)
+            king_dest_col=1
+            rook_dest_col=king_tile.col-1
         elif castle_type=="KC":
             rook_tile=self.get_tile(row,7)
+            king_dest_col=6
+            rook_dest_col=king_tile.col+1
+        king_dest_tile=self.get_tile(row,king_dest_col)
+        rook_dest_tile=self.get_tile(row,rook_dest_col)
+        if(receiving==True):
+            self.make_move(king_tile,king_dest_tile)
+            self.make_move(rook_tile,rook_dest_tile)
+            self.update_king_position(color,king_dest_tile.row,king_dest_tile.col)
+            return True
         #Check if castle move is valid
-        if self.validate_castle(king_tile,rook_tile,castle_type):
-
+        if self.validate_castle(king_tile,rook_tile,castle_type,color):
+            self.make_move(king_tile,king_dest_tile)
+            self.make_move(rook_tile,rook_dest_tile)
+            self.update_king_position(color,king_dest_tile.row,king_dest_tile.col)
+            return True
         
-            
-        pass
+        print("Can't castle right now!")
+        return False
+        
     def move(self, move_str,receiving_move=False):#Eg of a move is Ne4
-        castle_res=self.move_is_castle()
+        castle_res=self.move_is_castle(move_str)
 
         if castle_res is not None:
-            self.handle_castle(castle_res)
+            success= self.handle_castle(castle_res,receiving_move)
+            return success
+            
+             
 
         move_decoded = self.decode_move(move_str)
         if move_decoded is None:
@@ -365,7 +392,10 @@ class ChessBoard:
         
         #Get tiles
         start_tile=self.get_tile(starting_row,starting_col)
+        
         dest_tile=self.get_tile(destination_row,destination_col)
+        if(start_tile is None or dest_tile is None):
+            return False
         if receiving_move:
             self.make_move(start_tile,dest_tile)
             return True
@@ -373,12 +403,12 @@ class ChessBoard:
             return False
         #Check if move puts themself in check
         self.make_move(start_tile,dest_tile)
-        self.update_king_position(self.user_color)
+        self.update_king_position(self.user_color,dest_tile.row,dest_tile.col)
         if self.is_in_check(self.user_color):
             print("Can't move yourself into check!")
             #Undo move if it puts yourself in check
             self.make_move(dest_tile,start_tile)
-            self.update_king_position(self.user_color)
+            self.update_king_position(self.user_color,start_tile.row,start_tile.col)
             return False
         
         # Check if the move puts the opponent's king in check
@@ -390,6 +420,8 @@ class ChessBoard:
         return True
     
     def update_king_position(self, color, row, col):
+        if self.board[row][col].piece is None:
+            return
         # Update the position of the king for the specified color
         if self.board[row][col].piece.symbol == 'K':
             self.king_positions[color] = (row, col)
