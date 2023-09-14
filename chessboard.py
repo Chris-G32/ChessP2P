@@ -25,9 +25,10 @@ class ChessBoard:
             ChessBoard.WHITE: (7, 4),  # White king starts at e1
             ChessBoard.BLACK: (0, 4),  # Black king starts at e8
         }
-      
-        self.piece_dict={ChessBoard.WHITE:[],ChessBoard.BLACK:[]}
 
+        self.piece_dict={ChessBoard.WHITE:[],ChessBoard.BLACK:[]}
+        self.white_pawns=[]#Used to store all the pawns to handle en passant
+        self.black_pawns=[]
     def create_board(self):
         # Create an 8x8 chessboard using a list of lists
         board = [[Tile(row,col) for col in range(8)] for row in range(8)]
@@ -44,6 +45,7 @@ class ChessBoard:
 
         for i in range(8):
             board[1][i] = Tile(1, i, Pawn(ChessBoard.BLACK))
+            self.black_pawns.append(board[1][i])
 
         # Place white pieces on the board
         board[7][0] = Tile(7, 0, Rook(ChessBoard.WHITE))
@@ -57,6 +59,7 @@ class ChessBoard:
 
         for i in range(8):
             board[6][i] = Tile(6, i, Pawn(ChessBoard.WHITE))
+            self.white_pawns.append(board[6][i])
 
         return board
 
@@ -166,7 +169,15 @@ class ChessBoard:
         if(piece.color != self.user_color):
             print("You can only move your own pieces!!!")
             return False
-        if not piece.validate_move(start_tile,dest_tile):
+        
+        if isinstance(piece,Pawn):
+            left=self.get_tile(start_tile.row,start_tile.col-1)
+            right=self.get_tile(start_tile.row,start_tile.col+1)
+            if not piece.validate_move(start_tile,dest_tile,left,right):
+                print("Can't make this move, this piece can't move there.")
+                return False
+        elif not piece.validate_move(start_tile,dest_tile):
+            print("Can't make this move, this piece can't move there.")
             return False
         if self.path_obstructed(piece.get_piece_path(start_tile,dest_tile)):
             print("Can't make this move, there are pieces in the way.")
@@ -185,14 +196,22 @@ class ChessBoard:
             return False
         # if(piece.color != self.user_color):
         #     return False
+        if isinstance(piece,Pawn):
+            left=self.get_tile(start_tile.row,start_tile.col-1)
+            right=self.get_tile(start_tile.row,start_tile.col+1)
+            if not piece.validate_move(start_tile,dest_tile,left,right):
+                return False
         if not piece.validate_move(start_tile,dest_tile):
             return False
+        
         if self.path_obstructed(piece.get_piece_path(start_tile,dest_tile)):
             return False
         if dest_tile.piece!=None:
             if dest_tile.piece.color==piece.color:
                 return False
-        return True    
+        return True
+    def test_move(self):
+        pass  
     def make_move(self,start_tile,dest_tile):
         self.board[dest_tile.row][dest_tile.col].piece=start_tile.piece
         self.board[start_tile.row][start_tile.col].piece =None
@@ -337,7 +356,10 @@ class ChessBoard:
         self.make_move(move_from,self.get_tile(king_start['row'],king_start['col']))
         return not failed_castle
 
-
+    def move_enpassant(self,start,dest,left,right):
+        pass
+    def test_enpassant_for_check(self,start,dest,left,right):
+        pass
     def handle_castle(self,castle_type,receiving:bool):
         color=self.user_color
         if receiving:
@@ -382,8 +404,6 @@ class ChessBoard:
             success= self.handle_castle(castle_res,receiving_move)
             return success
             
-             
-
         move_decoded = self.decode_move(move_str)
         if move_decoded is None:
             return False
@@ -419,6 +439,15 @@ class ChessBoard:
             print("Check!")
         if dest_tile.piece.symbol=="K" or dest_tile.piece.symbol=="K":
             dest_tile.piece.has_moved=True
+
+        #Clear en passants
+        if isinstance(dest_tile.piece,Pawn):
+            if(self.user_color==ChessBoard.WHITE):
+                for pawn in self.black_pawns:
+                    pawn.en_passantable=False
+            elif(self.user_color==ChessBoard.BLACK):
+                for pawn in self.white_pawns:
+                    pawn.en_passantable=False
         return True
     
     def update_king_position(self, color, row, col):
@@ -482,7 +511,12 @@ class Pawn(Piece):
     def __init__(self, color):
         super().__init__(color)
         self.symbol = 'P'
-    def validate_move(self,current:Tile,new:Tile):
+        self.en_passantable=False
+    def move_is_en_passant(current:Tile,new:Tile,left:Tile,right:Tile):
+        if current.piece.symbol=="P":
+
+
+    def validate_move(self,current:Tile,new:Tile,left:Tile,right:Tile):
         # Calculate the direction of movement based on pawn color
         direction = -1 if self.color == ChessBoard.WHITE else 1
 
@@ -492,8 +526,10 @@ class Pawn(Piece):
 
         # Pawn's initial double move
         if current.row == 1 and new.row == 3 and direction == 1 and current.col == new.col:
+            en_passantable=True
             return not new.occupied() #Allowed if free space
         if current.row == 6 and new.row == 4 and direction == -1 and current.col == new.col:
+            en_passantable=True
             return not new.occupied() #Allowed if free space
 
         # Regular pawn move (one square forward)
@@ -501,8 +537,20 @@ class Pawn(Piece):
             return not new.occupied() #Allowed if free space
 
         # Pawn capture (diagonal)
-        if (new.row == current.row + direction and
-            (new.col == current.col + 1 or new.col == current.col - 1)):
+        if (new.row == current.row + direction):
+            if (new.col == current.col - 1):
+                if isinstance(left.piece,Pawn):
+                    if left.piece.en_passantable and left.piece.color != self.color:
+                        return not new.occupied()
+                else:
+                    return new.occupied()
+            elif (new.col == current.col + 1):
+                if isinstance(right.piece,Pawn):
+                    if right.piece.en_passantable and right.piece.color != self.color:
+                        return not new.occupied()
+                else:
+                    return new.occupied()
+            #This means it is normal capture
             return new.occupied()
         
         # Invalid move
