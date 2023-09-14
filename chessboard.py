@@ -258,12 +258,14 @@ class ChessBoard:
                     for dest_col in range(8):
                         dest_tile = self.get_tile(dest_row,dest_col)
                         if self.full_move_validation_for_checks(start_tile, dest_tile):
+                            piece_to_restore=dest_tile.piece
                             # Try making the move and see if it puts the king out of check
                             self.make_move(start_tile, dest_tile)
                             #Are we in check now?
                             in_check=self.is_in_check(color)
                             #Restore board state
                             self.make_move(dest_tile, start_tile)
+                            dest_tile.piece=piece_to_restore
                             #Return true if we aren't in check
                             if in_check==False:
                                 return True
@@ -333,7 +335,7 @@ class ChessBoard:
         
         #Reset king to its true spot instead of its intermediary check spots
         self.make_move(move_from,self.get_tile(king_start['row'],king_start['col']))
-        return failed_castle
+        return not failed_castle
 
 
     def handle_castle(self,castle_type,receiving:bool):
