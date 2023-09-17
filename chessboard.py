@@ -1,3 +1,4 @@
+
 class Tile:
     def __init__(self, row, col=None, piece=None):
         self.row = row
@@ -62,23 +63,6 @@ class ChessBoard:
             self.white_pawns.append(board[6][i])
 
         return board
-
-    # def display_board(self, color):
-    #     # Handle printing the board for white or black pieces
-    #     if color == ChessBoard.BLACK:
-    #         pass
-    #     else:
-    #         pass
-
-    #     # Display the chessboard
-    #     for rank in self.board:
-    #         rank_str=''
-    #         for square in rank:
-    #             if(square.piece==None):
-    #                 rank_str+=' '
-    #             else:
-    #                 rank_str+=square.piece.symbol
-    #         print(rank_str)
     def alternate_background(background):
         if background==47:
             background=40
@@ -159,7 +143,7 @@ class ChessBoard:
         row = 8-int(rank) #Decrement here to keep in range 0-7
         col = ord(file) - ord('a')
         return row, col
-
+    
     def full_move_validation(self,start_tile:Tile,dest_tile:Tile):
         #Get the piece we are moving
         piece=start_tile.piece
@@ -211,7 +195,7 @@ class ChessBoard:
                 return False
         return True
     def test_move(self):
-        pass  
+        pass
     def make_move(self,start_tile,dest_tile):
         self.board[dest_tile.row][dest_tile.col].piece=start_tile.piece
         self.board[start_tile.row][start_tile.col].piece =None
@@ -356,10 +340,17 @@ class ChessBoard:
         self.make_move(move_from,self.get_tile(king_start['row'],king_start['col']))
         return not failed_castle
 
-    def move_enpassant(self,start,dest,left,right):
+    def handle_en_passant(self,start_tile,dest_tile):
+        left=self.get_tile(start_tile.row,start_tile.col-1)
+        right=self.get_tile(start_tile.row,start_tile.col+1)
+        if(Pawn.move_is_en_passant(start_tile,dest_tile,left,right)):
+            # Calculate the direction of movement based on pawn color
+            direction = -1 if start_tile.color == ChessBoard.WHITE else 1
+            captured_tile=self.get_tile(dest_tile.row - direction,dest_tile.col)
+            captured_tile.piece=None
+    def undo_en_passant(start_tile,dest_tile):
         pass
-    def test_enpassant_for_check(self,start,dest,left,right):
-        pass
+
     def handle_castle(self,castle_type,receiving:bool):
         color=self.user_color
         if receiving:
@@ -420,6 +411,7 @@ class ChessBoard:
             return False
         if receiving_move:
             self.make_move(start_tile,dest_tile)
+            self.handle_en_passant(start_tile,dest_tile)
             return True
         if(self.full_move_validation(start_tile,dest_tile)==False):
             return False
@@ -513,9 +505,23 @@ class Pawn(Piece):
         self.symbol = 'P'
         self.en_passantable=False
     def move_is_en_passant(current:Tile,new:Tile,left:Tile,right:Tile):
-        if current.piece.symbol=="P":
-
-
+        color=current.piece.color
+        if not isinstance(current.piece,Pawn):
+            return False
+        # Calculate the direction of movement based on pawn color
+        direction = -1 if current.piece.color == ChessBoard.WHITE else 1
+        # Pawn capture (diagonal)
+        if (new.row == current.row + direction):
+            if (new.col == current.col - 1):
+                if isinstance(left.piece,Pawn):
+                    if left.piece.en_passantable and left.piece.color != color:
+                        return True
+            elif (new.col == current.col + 1):
+                if isinstance(right.piece,Pawn):
+                    if right.piece.en_passantable and right.piece.color != color:
+                        return True
+            #This means it is normal capture
+            return False
     def validate_move(self,current:Tile,new:Tile,left:Tile,right:Tile):
         # Calculate the direction of movement based on pawn color
         direction = -1 if self.color == ChessBoard.WHITE else 1
