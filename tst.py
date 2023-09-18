@@ -12,7 +12,7 @@ while True:
     board_2.move(move_1,True)
     state=board_2.is_checkmate_or_stalemate(board_2.user_color)
     # print(state)
-    board_2.display_board()
+    board_1.display_board()
     if state=="CM":
         print("Checkmate! White wins")
         exit()
@@ -27,7 +27,7 @@ while True:
         move_2_valid=board_2.move(move_2)
     board_1.move(move_2,True)
     state=board_1.is_checkmate_or_stalemate(board_1.user_color)
-    board_1.display_board()
+    board_2.display_board()
     
     # print(state)
     if state=="CM":
@@ -36,3 +36,4 @@ while True:
     elif state=="SM":
         print("Stalemate")
         exit()
+
