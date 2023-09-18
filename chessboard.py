@@ -6,6 +6,7 @@ class Tile:
         self.piece = piece
     def occupied(self):
         return self.piece!=None
+#Utility class for coloring text
 class ANSI():
     def background(code):
         return "\33[{code}m".format(code=code)
@@ -18,6 +19,57 @@ class ANSI():
 class ChessBoard:
     BLACK = 0
     WHITE = 1
+    class MoveDecoder:
+        def __init__(self,chessboard):
+            self.chessboard=chessboard
+            """Translates a move string into the starting tile and destination tile. Returns a tuple of start tile then destination"""
+        def decode_move(self, move_str):
+            start_tile=None
+            dest_tile=None
+
+            move_str = move_str.strip()
+            
+            move_dict = {
+                'from': {},
+                'dest': {}
+            }
+            
+            # Check if the move string has a valid length (e.g., 'e4' or 'Nf3')
+            if len(move_str) < 2:
+                print("Invalid move: Too short.")
+                return start_tile,dest_tile
+
+            # Extract the source and destination squares from the move string
+            from_square = move_str[:-2]
+            dest_square = move_str[-2:]
+
+            # Check if the source and destination squares are valid
+            if not self.is_valid_square(from_square) or not self.is_valid_square(dest_square):
+                print("Invalid move: Invalid square notation.")
+                return start_tile,dest_tile
+
+            from_row,from_col=self.square_to_coordinates(from_square)
+            to_row,to_col=self.square_to_coordinates(dest_square)
+            
+            #Get tiles
+            start_tile=self.chessboard.get_tile(from_row,from_col)
+            dest_tile=self.get_tile(to_row,to_col)
+
+            return start_tile,dest_tile
+
+        def is_valid_square(self, square):
+            # Check if the square notation is valid (e.g., 'a1' to 'h8')
+            if len(square) != 2:
+                return False
+            file, rank = square[0], square[1]
+            return rank in '12345678' and file in 'abcdefgh'
+
+        def square_to_coordinates(self, square):
+            # Convert square notation (e.g., 'e4') to row and column indices
+            file, rank = square[0], square[1]
+            row = 8-int(rank) #Decrement here to keep in range 0-7
+            col = ord(file) - ord('a')
+            return row, col
     
     def __init__(self,user_color):
         self.user_color=user_color
@@ -26,6 +78,7 @@ class ChessBoard:
             ChessBoard.WHITE: (7, 4),  # White king starts at e1
             ChessBoard.BLACK: (0, 4),  # Black king starts at e8
         }
+        self.move_decoder=ChessBoard.MoveDecoder(self)
         self.move_buffer=[]#Contains the updated tiles on a given move
         self.white_pawns=[]#Used to store all the pawns to handle en passant
         self.black_pawns=[]
@@ -103,54 +156,7 @@ class ChessBoard:
         print("   " + "-" * 17)
         print(column_labels)
 
-    """Translates a move string into the starting tile and destination tile. Returns a tuple of start tile then destination"""
-    def decode_move(self, move_str):
-        start_tile=None
-        dest_tile=None
 
-        move_str = move_str.strip()
-        
-        move_dict = {
-            'from': {},
-            'dest': {}
-        }
-        
-        # Check if the move string has a valid length (e.g., 'e4' or 'Nf3')
-        if len(move_str) < 2:
-            print("Invalid move: Too short.")
-            return start_tile,dest_tile
-
-        # Extract the source and destination squares from the move string
-        from_square = move_str[:-2]
-        dest_square = move_str[-2:]
-
-        # Check if the source and destination squares are valid
-        if not self.is_valid_square(from_square) or not self.is_valid_square(dest_square):
-            print("Invalid move: Invalid square notation.")
-            return start_tile,dest_tile
-
-        from_row,from_col=self.square_to_coordinates(from_square)
-        to_row,to_col=self.square_to_coordinates(dest_square)
-        
-        #Get tiles
-        start_tile=self.get_tile(from_row,from_col)
-        dest_tile=self.get_tile(to_row,to_col)
-
-        return start_tile,dest_tile
-
-    def is_valid_square(self, square):
-        # Check if the square notation is valid (e.g., 'a1' to 'h8')
-        if len(square) != 2:
-            return False
-        file, rank = square[0], square[1]
-        return rank in '12345678' and file in 'abcdefgh'
-
-    def square_to_coordinates(self, square):
-        # Convert square notation (e.g., 'e4') to row and column indices
-        file, rank = square[0], square[1]
-        row = 8-int(rank) #Decrement here to keep in range 0-7
-        col = ord(file) - ord('a')
-        return row, col
     
     def full_move_validation(self,start_tile:Tile,dest_tile:Tile):
         #Get the piece we are moving
@@ -203,59 +209,15 @@ class ChessBoard:
             if dest_tile.piece.color==piece.color:
                 return False
         return True
-    def test_move(self):
-        pass
-    #DEPRECATED
-    # def make_move(self,start_tile,dest_tile):
-    #     self.board[dest_tile.row][dest_tile.col].piece=start_tile.piece
-    #     self.board[start_tile.row][start_tile.col].piece =None
     
     #Returns none when it is invalid row and col
     def get_tile(self,row,col):
         if(not(row<8 and row>=0 and col<8 and col>=0)):
             return None
         return self.board[row][col]
-    
-    #DEPRECATED
-    def king_can_move(self,color):
-        #Get kings tile
-        user_king_pos=self.king_positions[color]
-        king_tile=self.get_tile(user_king_pos[1],user_king_pos[2]) 
-
-        start_tile=king_tile
-        #Check all possible king moves
-        for i in range(-1,2): #-1 through 1
-            for j in range(-1,2):
-                #Don't check the case where king is stationary
-                if i==0 and j==0:
-                    continue
-                #Get destination tile
-                dest_tile=self.get_tile(start_tile.row+i,start_tile.col+j)
-                #Ignores invalid destination
-                if dest_tile==None:
-                    continue
-                #Check if the tile is occupied by a piece
-                if dest_tile.occupied():
-                    #If its your piece ignore this move, this move is not valid
-                    if dest_tile.piece.color==color:
-                        continue
-                #Make the move
-                self.make_move(start_tile,dest_tile)
-                self.update_king_position(color,dest_tile.row,dest_tile.col)
-
-                #Evaluate board state
-                is_check=self.is_in_check(color)
-
-                #Restore true board state
-                self.undo_move()
-                self.update_king_position(color,start_tile.row,start_tile.col)
-
-                #If king can move we know it is neither checkmate or stalemate
-                if not is_check:
-                    return True
-        return False
-    
-    def non_king_can_move(self,color):
+        
+    #Currently just brute force checks, candidate to optimize later
+    def is_any_move_possible(self,color):
         for row in range(8):
             for col in range(8):
                 start_tile = self.get_tile(row,col)
@@ -282,13 +244,6 @@ class ChessBoard:
                             #Return true if we aren't in check
                             if in_check==False:
                                 return True
-        return False
-        
-    #Currently just brute force checks, candidate to optimize later
-    def is_any_move_possible(self,color):
-        #Now check non king moves
-        if self.non_king_can_move(color):
-            return True
         return False
     
     def is_checkmate_or_stalemate(self,color):
@@ -347,7 +302,8 @@ class ChessBoard:
                 break
         
         #Reset king to its true spot instead of its intermediary check spots
-        self.move_piece(move_from,self.get_tile(king_start['row'],king_start['col']))
+        self.undo_move()
+
         return not failed_castle
 
     """If it is en passant, grab that pawn. NOTE: This does not perform any move validation itself."""
@@ -360,17 +316,17 @@ class ChessBoard:
             captured_tile=self.get_tile(dest_tile.row - direction,dest_tile.col)
             self.move_buffer.append(deepcopy(captured_tile))
             captured_tile.piece=None#Capture the piece
+    #Never used
+    # def undo_en_passant(self,start_tile,dest_tile):
+    #     captured_color=ChessBoard.BLACK if dest_tile.color==ChessBoard.WHITE else ChessBoard.WHITE
+    #     # Calculate the direction of movement based on pawn color
+    #     direction = -1 if start_tile.color == ChessBoard.WHITE else 1
 
-    def undo_en_passant(self,start_tile,dest_tile):
-        captured_color=ChessBoard.BLACK if dest_tile.color==ChessBoard.WHITE else ChessBoard.WHITE
-        # Calculate the direction of movement based on pawn color
-        direction = -1 if start_tile.color == ChessBoard.WHITE else 1
-
-        captured_tile=self.get_tile(dest_tile.row - direction,dest_tile.col)
-        restored_pawn=Pawn(captured_color)
-        restored_pawn.en_passantable=True
-        captured_tile.piece=restored_pawn
-        self.make_move(start_tile,dest_tile)
+    #     captured_tile=self.get_tile(dest_tile.row - direction,dest_tile.col)
+    #     restored_pawn=Pawn(captured_color)
+    #     restored_pawn.en_passantable=True
+    #     captured_tile.piece=restored_pawn
+    #     self.make_move(start_tile,dest_tile)
 
     def handle_castle(self,castle_type,receiving:bool):
         color=self.user_color
@@ -397,13 +353,11 @@ class ChessBoard:
         if(receiving==True):
             self.move_piece(king_tile,king_dest_tile)
             self.move_piece(rook_tile,rook_dest_tile)
-            self.update_king_position(color,king_dest_tile.row,king_dest_tile.col)
             return True
         #Check if castle move is valid
         if self.validate_castle(king_tile,rook_tile,castle_type,color):
             self.move_piece(king_tile,king_dest_tile)
             self.move_piece(rook_tile,rook_dest_tile)
-            self.update_king_position(color,king_dest_tile.row,king_dest_tile.col)
             return True
         
         print("Can't castle right now!")
@@ -422,24 +376,43 @@ class ChessBoard:
         if (isinstance(start_tile.piece,Pawn)):
             #If it is en passant, grab that pawn
             self.handle_en_passant(start_tile,dest_tile)
+            
+            #Handle setting en passant flag
+            if(abs(dest_tile.row-start_tile.row)==2):
+                start_tile.piece.en_passantable=True
 
             #Promotion
-
+        #Handle king moves
         #Actually update the board
         self.move_piece(start_tile,dest_tile)
 
+        #Update king if piece is king
+        self.update_king_position(self.user_color,dest_tile.row,dest_tile.col)
+
     def undo_move(self):
-        for restore_tile in self.move_buffer:
+        #Iterate through moves from last to first, this is necessary to properly undo a castle move
+        for restore_tile in self.move_buffer.reverse():
             if isinstance(restore_tile,Tile):
                 #Retrieve current tile from board
                 board_tile=self.get_tile(restore_tile.row,restore_tile.col)
                 #Restore it to the buffered piece
                 board_tile.piece=restore_tile.piece
+                #Update king if piece is king
+                self.update_king_position(self.user_color,board_tile.row,board_tile.col)
             else:
                 raise TypeError("Move buffer received an invalid type")
         #Empty buffer
         self.move_buffer.clear()
     
+    def clean_up_move(self):
+        #Clear en passants
+        if(self.user_color==ChessBoard.WHITE):
+            for pawn in self.black_pawns:
+                pawn.en_passantable=False
+        elif(self.user_color==ChessBoard.BLACK):
+            for pawn in self.white_pawns:
+                pawn.en_passantable=False
+        self.move_buffer.clear()
     
     """Accepts a users input and translates it into a move on the board if it is a legal move"""
     def move(self, move_str,receiving_move=False):#Eg of a move is Ne4
@@ -447,6 +420,7 @@ class ChessBoard:
 
         if castle_res is not None:
             success= self.handle_castle(castle_res,receiving_move)
+            self.clean_up_move()
             return success
         
         #Load starting tiles
@@ -455,22 +429,24 @@ class ChessBoard:
         #Null checks
         if(start_tile is None or dest_tile is None):
             return False
+        
         #Assume move is validated and make the move if receiving
         if receiving_move:
             self.make_move(start_tile,dest_tile)
             self.move_buffer.clear()
             return True
+        
         #Validate the move
         if(self.full_move_validation(start_tile,dest_tile)==False):
             return False
         
-        #Check if move puts themself in check
+        #Move piece
         self.make_move(start_tile,dest_tile)
-        self.update_king_position(self.user_color,dest_tile.row,dest_tile.col)
+        
+        #Check if we are in check after move
         if self.is_in_check(self.user_color):
             #Undo move if it puts yourself in check
             self.undo_move()
-            self.update_king_position(self.user_color,start_tile.row,start_tile.col)
             print("Can't move yourself into check!")
             return False
         
@@ -481,15 +457,7 @@ class ChessBoard:
         if isinstance(dest_tile.piece,King) or isinstance(dest_tile.piece,Rook):
             dest_tile.piece.has_moved=True
 
-        #Clear en passants
-        if isinstance(dest_tile.piece,Pawn):
-            if(self.user_color==ChessBoard.WHITE):
-                for pawn in self.black_pawns:
-                    pawn.en_passantable=False
-            elif(self.user_color==ChessBoard.BLACK):
-                for pawn in self.white_pawns:
-                    pawn.en_passantable=False
-        self.move_buffer.clear()
+        self.clean_up_move()
         return True
     
     def update_king_position(self, color, row, col):
@@ -585,10 +553,10 @@ class Pawn(Piece):
 
         # Pawn's initial double move
         if current.row == 1 and new.row == 3 and direction == 1 and current.col == new.col:
-            self.en_passantable=True
+            
             return not new.occupied() #Allowed if free space
         if current.row == 6 and new.row == 4 and direction == -1 and current.col == new.col:
-            self.en_passantable=True
+            
             return not new.occupied() #Allowed if free space
 
         # Regular pawn move (one square forward)
