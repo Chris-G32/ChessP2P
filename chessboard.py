@@ -53,7 +53,7 @@ class ChessBoard:
             
             #Get tiles
             start_tile=self.chessboard.get_tile(from_row,from_col)
-            dest_tile=self.get_tile(to_row,to_col)
+            dest_tile=self.chessboard.get_tile(to_row,to_col)
 
             return start_tile,dest_tile
 
@@ -305,7 +305,7 @@ class ChessBoard:
         self.undo_move()
 
         return not failed_castle
-
+    
     """If it is en passant, grab that pawn. NOTE: This does not perform any move validation itself."""
     def handle_en_passant(self,start_tile:Tile,dest_tile:Tile):
         left=self.get_tile(start_tile.row,start_tile.col-1)
@@ -391,7 +391,7 @@ class ChessBoard:
 
     def undo_move(self):
         #Iterate through moves from last to first, this is necessary to properly undo a castle move
-        for restore_tile in self.move_buffer.reverse():
+        for restore_tile in self.move_buffer.__reversed__():
             if isinstance(restore_tile,Tile):
                 #Retrieve current tile from board
                 board_tile=self.get_tile(restore_tile.row,restore_tile.col)
@@ -424,7 +424,7 @@ class ChessBoard:
             return success
         
         #Load starting tiles
-        start_tile,dest_tile = self.decode_move(move_str)
+        start_tile,dest_tile = self.move_decoder.decode_move(move_str)
 
         #Null checks
         if(start_tile is None or dest_tile is None):
