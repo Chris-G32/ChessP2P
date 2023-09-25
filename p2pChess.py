@@ -1,8 +1,6 @@
 from menu import Menu,ChallengeFriend,ViewChallenges,ExitApp,Client
 from chessboard import ChessBoard
-import multiprocessing
 from threading import Thread
-import signal
 import time
 def create_menu():
     options=[ChallengeFriend(),ViewChallenges(),ExitApp()]
