@@ -199,8 +199,7 @@ class ChessBoard:
             right=self.get_tile(start_tile.row,start_tile.col+1)
             if not piece.validate_move(start_tile,dest_tile,left,right):
                 return False
-            return True
-        if not piece.validate_move(start_tile,dest_tile):
+        elif not piece.validate_move(start_tile,dest_tile):
             return False
         
         if self.path_obstructed(piece.get_piece_path(start_tile,dest_tile)):
@@ -234,6 +233,10 @@ class ChessBoard:
                 for dest_row in range(8):
                     for dest_col in range(8):
                         dest_tile = self.get_tile(dest_row,dest_col)
+                        if dest_tile.piece is None:
+                            continue
+                        if (start_tile.col==5 and start_tile.row==5 and dest_tile.piece.symbol=="Q" ):
+                            x=5
                         if self.full_move_validation_for_checks(start_tile, dest_tile):
                             # Try making the move and see if it puts the king out of check
                             self.make_move(start_tile, dest_tile)
@@ -577,8 +580,7 @@ class Pawn(Piece):
                         return not new.occupied()
                 else:
                     return new.occupied()
-            #This means it is normal capture
-            return new.occupied()
+
         
         # Invalid move
         return False
