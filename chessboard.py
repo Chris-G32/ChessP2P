@@ -233,10 +233,10 @@ class ChessBoard:
                 for dest_row in range(8):
                     for dest_col in range(8):
                         dest_tile = self.get_tile(dest_row,dest_col)
-                        if dest_tile.piece is None:
-                            continue
-                        if (start_tile.col==5 and start_tile.row==5 and dest_tile.piece.symbol=="Q" ):
-                            x=5
+                        # if dest_tile.piece is None:
+                        #     continue
+                        # if (start_tile.col==5 and start_tile.row==5 and dest_tile.piece.symbol=="Q" ):
+                        #     x=5
                         if self.full_move_validation_for_checks(start_tile, dest_tile):
                             # Try making the move and see if it puts the king out of check
                             self.make_move(start_tile, dest_tile)
