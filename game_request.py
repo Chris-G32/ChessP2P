@@ -3,7 +3,7 @@ from datetime import datetime,date
 
 
 class game_request:
-    def __init__(self,ip:str,user:str,timestamp=datetime.now()):
+    def __init__(self,ip:str,user="",timestamp=datetime.now()):
         self.ip=ip
         self.user=user
         self.timestamp=timestamp
