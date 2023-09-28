@@ -26,7 +26,7 @@ class Client:
 
     def add_request(game_req:game_request):
         global received_requests
-        received_requests.append(game_request(game_req.ip,game_req.user,game_req.timestamp))
+        received_requests.append(game_request(game_req.ip,game_req.msg,game_req.timestamp))
         if received_requests.__len__()>10:
             received_requests.pop(0)
         
