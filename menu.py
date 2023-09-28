@@ -26,6 +26,11 @@ class Client:
 
     def add_request(game_req:game_request):
         global received_requests
+        #Remove requests that are from the same ip, so we only keep the newest
+        for i in reversed(received_requests):
+            if i.ip==game_req.ip:
+                received_requests.remove(i)
+        #Add request to list
         received_requests.append(game_request(game_req.ip,game_req.msg,game_req.timestamp))
         if received_requests.__len__()>10:
             received_requests.pop(0)
@@ -129,7 +134,7 @@ class ChallengeFriend(MenuOption):
         ChallengeFriend.send_game_request(ip_to_challenge,challenge)
         
 class ViewChallenges(MenuOption):
-    DISPLAY_TEXT=f"View Incoming Challenges ({received_requests.__len__()})"
+    DISPLAY_TEXT=f"View Incoming Challenges"
     #Returns none on invalid input
     def validate_input(self,inp:str,max_val:int):
         try:
@@ -149,8 +154,10 @@ class ViewChallenges(MenuOption):
             game.start()
         else:
             print("Failed to accept challenge")
+
     def execute(self):
         global received_requests
+        
         #Check not empty
         if received_requests.__len__()<1:
             print("No challenges...")
@@ -179,7 +186,7 @@ class ViewChallenges(MenuOption):
         for i in received_requests:
             print(f"\t{count}: {i.ip} - {i.msg}")
             count+=1
-
+        #Add reject/ remove of challenges for user
         selection=None
         while selection==None:
             selection=input("Enter the challenges number to accept, or 0 to go back: ")
