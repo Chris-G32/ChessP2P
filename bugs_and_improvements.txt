@@ -1,0 +1,6 @@
+Should display to user what color they are playing as when game starts.
+Flip board so the users always on the bottom.
+accept actual chess notation, save games
+Allow for a username to be created 
+Allow for the choosing of color in challenging 
+Maybe add move autocomplete where tab will list you your available moves

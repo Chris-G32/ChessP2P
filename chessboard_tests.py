@@ -2,6 +2,11 @@ from chessboard import ChessBoard,Piece,Pawn,Knight,King,Queen,Rook,Bishop
 
 import unittest
 
+#Make a utility for making board states to test, pysimplegui maybe
+#Test castling out of check, test various castling things
+#En passant, identify edge cases if possible.
+
+
 class TestChessBoard(unittest.TestCase):
     def setUp(self):
         self.board = ChessBoard(ChessBoard.WHITE)
