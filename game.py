@@ -29,13 +29,14 @@ class GameConnectionHandler(CancellableAction):
 
             #Stop none issues
             client_socket=None
-            client_address=''
+            client_address=None
             
             try:
                 client_socket, client_address = self.server_socket.accept()
-            except OSError:
-                pass
-
+            except OSError as e:
+                print(e)
+            if client_address==None:
+                continue
             if(client_address[0]==friend and not self.is_cancelled()):
                 self.active_connection=True
                 self.client_socket=client_socket
