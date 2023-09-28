@@ -39,17 +39,18 @@ class Client:
         Client.server_up=True
         host = Client.ip  
         port = Client.CHALLENGE_PORT
+        
         try:
-            server_socket=Client.server_socket
+            # server_socket=Client.server_socket
             # server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server_socket.bind((host, port))
-            server_socket.listen(10)  # Allow ten incoming connection
+            Client.server_socket.bind((host, port))
+            Client.server_socket.listen(10)  # Allow ten incoming connection
 
             # print("Waiting for a connection...")
 
             while Client.keep_listening:
                 try:
-                    client_socket, client_address = server_socket.accept()
+                    client_socket, client_address = Client.server_socket.accept()
                     data = client_socket.recv(2048).decode()
                 except OSError:
                     print("Server shut down!")
@@ -70,10 +71,11 @@ class Client:
                 if not data:
                     break
                 client_socket.close()
-        except:
-            print("--error in challenge listener, please restart app--")
+        except Exception as e:
+            print(e)
+            # print("--error in challenge listener, please restart app--")
             
-        server_socket.close()
+        Client.server_socket.close()
         Client.server_up=False
     
 class MenuOption:
