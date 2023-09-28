@@ -34,9 +34,8 @@ class GameConnectionHandler(CancellableAction):
             try:
                 client_socket, client_address = self.server_socket.accept()
             except OSError as e:
-                print(e)
-            if client_address==None:
                 continue
+            
             if(client_address[0]==friend and not self.is_cancelled()):
                 self.active_connection=True
                 self.client_socket=client_socket
