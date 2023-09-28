@@ -6,7 +6,6 @@ ChessP2P is a peer-to-peer (P2P) chess game implemented in Python that enables y
 - [Getting Started](#getting-started)
 - [Features](#features)
 - [How to Play](#how-to-play)
-- [Options](#options)
 - [Contributing](#contributing)
 - [License](#license)
 
