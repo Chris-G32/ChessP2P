@@ -101,7 +101,7 @@ class ChallengeFriend(MenuOption):
         #Send initial challenge object
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.settimeout(10)
-        
+
         try:
             #Attempt connect to challenged ip
             client_socket.connect((host, port))
@@ -141,7 +141,7 @@ class ViewChallenges(MenuOption):
             print(f"Enter a number between 0 and {max_val}")
             return None
         
-        return inp
+        return inp 
     def accept_challenge(challenge:game_request):
         game=Game(is_host=False)
         challenge_connected=game.respond_to_challenge(Client.PLAY_ON_PORT,challenge=challenge)
@@ -177,7 +177,7 @@ class ViewChallenges(MenuOption):
         print("\t0: Exit")
         count=1
         for i in received_requests:
-            print(f"\t{count}: {i.ip} - {i.user}")
+            print(f"\t{count}: {i.ip} - {i.msg}")
             count+=1
 
         selection=None

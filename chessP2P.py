@@ -38,7 +38,7 @@ if __name__=="__main__":
             error_count+=1
             if(error_count>=MAX_CONSECUTIVE_LOOP_ERRORS):
                 print("Application errored too many times. Attempting to clean up and exit..,")
-                should_exit=True
+                break
         
     Client.shutdown_server()
     challenge_listener.join()
