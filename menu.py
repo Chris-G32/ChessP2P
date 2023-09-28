@@ -71,7 +71,7 @@ class Client:
                 if not data:
                     break
                 client_socket.close()
-        except Exception as e:
+        except OSError as e:
             print(e)
             # print("--error in challenge listener, please restart app--")
             
@@ -101,6 +101,7 @@ class ChallengeFriend(MenuOption):
         #Send initial challenge object
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.settimeout(10)
+        
         try:
             #Attempt connect to challenged ip
             client_socket.connect((host, port))
@@ -122,13 +123,13 @@ class ChallengeFriend(MenuOption):
 
     def execute(self):
         ip_to_challenge=input("Enter your friends IP address: ")
-        name=input("Enter a name for your friend to see, or a message (: ")
+        msg=input("Enter a message (: ")
         my_ip=Client.ip
-        challenge=game_request(my_ip,name)
+        challenge=game_request(my_ip,msg)
         ChallengeFriend.send_game_request(ip_to_challenge,challenge)
         
 class ViewChallenges(MenuOption):
-    DISPLAY_TEXT="View Incoming Challenges"
+    DISPLAY_TEXT=f"View Incoming Challenges ({received_requests.__len__()})"
     #Returns none on invalid input
     def validate_input(self,inp:str,max_val:int):
         try:
