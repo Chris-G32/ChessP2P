@@ -50,5 +50,6 @@ coverage.xml
 docs/_build/
 
 #My stuff
+.vscode/
 invalid_requests.log
 *.pyc
