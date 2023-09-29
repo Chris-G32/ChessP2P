@@ -44,7 +44,7 @@ class ChessBoard:
 
             # Extract the source and destination squares from the move string
             from_square = move_str[:2]
-            dest_square = move_str[1:3]
+            dest_square = move_str[2:4]
             promotion=None
             #Length should never be longer than 5 otherwise its an error
             if len(move_str)==5:
