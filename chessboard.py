@@ -35,13 +35,20 @@ class ChessBoard:
             }
             
             # Check if the move string has a valid length (e.g., 'e4' or 'Nf3')
-            if len(move_str) < 2:
+            if len(move_str) < 4 :
                 print("Invalid move: Too short.")
+                return start_tile,dest_tile
+            if len(move_str)>5:
+                print("Invalid move: Too long.")
                 return start_tile,dest_tile
 
             # Extract the source and destination squares from the move string
-            from_square = move_str[:-2]
-            dest_square = move_str[-2:]
+            from_square = move_str[:2]
+            dest_square = move_str[1:3]
+            promotion=None
+            #Length should never be longer than 5 otherwise its an error
+            if len(move_str)==5:
+                promotion = move_str[-1]
 
             # Check if the source and destination squares are valid
             if not self.is_valid_square(from_square) or not self.is_valid_square(dest_square):
@@ -55,7 +62,7 @@ class ChessBoard:
             start_tile=self.chessboard.get_tile(from_row,from_col)
             dest_tile=self.chessboard.get_tile(to_row,to_col)
 
-            return start_tile,dest_tile
+            return start_tile,dest_tile,promotion
 
         def is_valid_square(self, square):
             # Check if the square notation is valid (e.g., 'a1' to 'h8')
@@ -116,26 +123,26 @@ class ChessBoard:
             self.white_pawns.append(board[6][i])
 
         return board
-    
+    def create_piece(symbol,color):
+        if symbol == 'P':
+            return Pawn(color)
+        elif symbol == 'R':
+            return Rook(color)
+        elif symbol == 'N':
+            return Knight(color)
+        elif symbol == 'B':
+            return Bishop(color)
+        elif symbol == 'Q':
+            return Queen(color)
+        elif symbol == 'K':
+            return King(color)
+        else:
+            raise ValueError(f"Invalid piece symbol: {symbol}")
     #array of form [[row,col,symbol,color],...]
     #Only contains pieces and their locations
     def load_board_from_array(self,arr):
         self.board=[[Tile(row,col) for col in range(8)] for row in range(8)]
-        def create_piece(symbol,color):
-            if symbol == 'P':
-                return Pawn(color)
-            elif symbol == 'R':
-                return Rook(color)
-            elif symbol == 'N':
-                return Knight(color)
-            elif symbol == 'B':
-                return Bishop(color)
-            elif symbol == 'Q':
-                return Queen(color)
-            elif symbol == 'K':
-                return King(color)
-            else:
-                raise ValueError(f"Invalid piece symbol: {symbol}")
+        
         # # Create an 8x8 chessboard using a list of lists
         # board = [[Tile(row,col) for col in range(8)] for row in range(8)]
         for i in arr:
@@ -143,7 +150,7 @@ class ChessBoard:
             col = i[1]
             symbol = i[2]
             color = i[3]
-            piece = create_piece(symbol, color)
+            piece = ChessBoard.create_piece(symbol, color)
 
             if piece:
                 self.board[row][col] = Tile(row, col, piece)
@@ -281,7 +288,7 @@ class ChessBoard:
                         #     x=5
                         if self.full_move_validation_for_checks(start_tile, dest_tile):
                             # Try making the move and see if it puts the king out of check
-                            self.make_move(start_tile, dest_tile)
+                            self.make_move(start_tile, dest_tile,True)
                             #Are we in check now?
                             in_check=self.is_in_check(color)
                             #Restore board state
@@ -340,7 +347,7 @@ class ChessBoard:
             if(move_to.occupied()):
                 failed_castle=True
                 break
-            self.make_move(move_from,move_to)
+            self.make_move(move_from,move_to,True)
             move_from=move_to
             if(self.is_in_check(color)):
                 failed_castle=True
@@ -412,7 +419,7 @@ class ChessBoard:
         to_tile.piece=from_tile.piece
         from_tile.piece=None
     
-    def make_move(self,start_tile:Tile, dest_tile:Tile):
+    def make_move(self,start_tile:Tile, dest_tile:Tile,no_promote=False,promote_to=None):
         #Copy initial tile states before move
         self.move_buffer.append(deepcopy(start_tile))
         self.move_buffer.append(deepcopy(dest_tile))
@@ -427,6 +434,9 @@ class ChessBoard:
                 start_tile.piece.en_passantable=True
 
             #Promotion
+            if dest_tile.row==0 or dest_tile.row==7:
+                start_tile.piece=ChessBoard.create_piece(promote_to.upper(),start_tile.piece.color)
+           
         #Handle king moves
         #Actually update the board
         self.move_piece(start_tile,dest_tile)
@@ -469,7 +479,9 @@ class ChessBoard:
             return success
         
         #Load starting tiles
-        start_tile,dest_tile = self.move_decoder.decode_move(move_str)
+        #Note on promotion. The 5th character is effectively ignored when no promotion is possible on the move, as such it is important that the user know this as well
+        #Probably not a good idea to have this be a happy side effect but it should work for now
+        start_tile,dest_tile,promotion = self.move_decoder.decode_move(move_str)
 
         #Null checks
         if(start_tile is None or dest_tile is None):
@@ -477,7 +489,7 @@ class ChessBoard:
         
         #Assume move is validated and make the move if receiving
         if receiving_move:
-            self.make_move(start_tile,dest_tile)
+            self.make_move(start_tile,dest_tile,promote_to=promotion)
             self.move_buffer.clear()
             return True
         
@@ -486,7 +498,7 @@ class ChessBoard:
             return False
         
         #Move piece
-        self.make_move(start_tile,dest_tile)
+        self.make_move(start_tile,dest_tile,promote_to=promotion)
         
         #Check if we are in check after move
         if self.is_in_check(self.user_color):

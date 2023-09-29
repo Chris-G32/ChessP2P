@@ -43,8 +43,6 @@ def main():
     global grid
     rows, cols = 8,8  # Adjust the grid size as needed
 
-    
-
     layout = [
         [sg.Frame('Grid', create_grid_layout(rows, cols, grid))],
         [sg.Button('Save_Board'),sg.Combo(["Swap","Add","Delete"],"Swap",key="__mode__",change_submits=True),sg.Combo(["P","N","B","Q","K"],key="__symbol__",change_submits=True),sg.Combo(["B","W"],key="__color__"), sg.Button('Exit')],
@@ -61,13 +59,15 @@ def main():
             break
         elif event == 'Save_Board':
             converted=[]
-            for i in grid:
-                for j in i:
-                    if j.piece is not None:
-                        converted.append([j.row,j.col,j.piece.symbol,j.piece.color])
+            for i in range(8):
+                for j in range(8):
+                    piece=grid[i][j].piece
+                    if piece is not None:
+                        converted.append([i,j,piece.symbol,piece.color])
+            #note: This file does not really follow json, formatting
             with open('boards.json', 'a') as f:
                 json.dump(converted, f)
-                f.write(",\n")
+                f.write("\n")
         elif event=="__mode__":
             piece_placement_vals=values
             first=None

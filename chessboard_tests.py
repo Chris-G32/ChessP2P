@@ -10,9 +10,57 @@ import unittest
 class TestChessBoard(unittest.TestCase):
     def setUp(self):
         self.board = ChessBoard(ChessBoard.WHITE)
+        self.boards=[]
+        self.load_boards_from_file()
     def tearDown(self):
         pass
+    def load_boards_from_file(self):
+        def parse_chessboard_string(chessboard_string:str):
+            chessboard_array = []
+            chessboard_string=chessboard_string.replace("[","")
+            chessboard_string=chessboard_string.replace("]","")
+            chessboard_string=chessboard_string.replace('"',"")
+            chars = chessboard_string.strip().split(", ")
 
+            row_data=[]
+            count=0
+            for i in chars:
+                if count%4==0 and not count==0:
+                    chessboard_array.append(row_data)
+                    row_data=[]
+                try:
+                    i=int(i)
+                except ValueError:
+                    pass
+                row_data.append(i)
+                count+=1
+                
+            # for row_str in rows:
+            #     row_data = row_str[1:-1].split(", ")
+            #     row_data = [int(row_data[0]), int(row_data[1]), row_data[2], int(row_data[3])]
+            #     chessboard_array.append(row_data)
+            
+            return chessboard_array
+        with open("boards.json","r") as f:
+            boards=f.readlines()
+
+        for i in boards:
+            board_array=parse_chessboard_string(i)
+            # board_as_white=ChessBoard(ChessBoard.WHITE)
+            # board_as_white.load_board_from_array(board_array)
+            # self.boards.append(board_as_white)
+            board_as_black=ChessBoard(ChessBoard.BLACK)
+            board_as_black.load_board_from_array(board_array)
+            self.boards.append(board_as_black)
+    
+    # def test_castle(self):
+    #     print("CASTLE")
+    #     for i in self.boards:
+    #         i.display_board()
+    #         self.assertFalse(i.move("O-O"))
+    #         i.display_board()
+            
+    #     print("END CASTLE")
 
     def test_initial_board_setup(self):
         # Test if the initial board setup is correct
@@ -31,6 +79,9 @@ class TestChessBoard(unittest.TestCase):
         # Add more assertions for other invalid moves
 
     def test_check_condition(self):
+        for i in self.boards:
+            self.assertFalse(i.is_in_check(ChessBoard.WHITE))
+
         # Test check condition
         # You should set up a specific board state to test this condition
         # Make a move that puts the opponent's king in check and then check if it's in check
@@ -42,6 +93,10 @@ class TestChessBoard(unittest.TestCase):
  
     def test_checkmate_condition(self):
         print("\nTesting Checkmate\n")
+        for i in self.boards:
+            self.assertEqual(i.is_checkmate_or_stalemate(i.user_color), None)
+
+        
         # Test checkmate condition
         # You should set up a specific board state to test this condition
         # Make a series of moves that lead to checkmate
