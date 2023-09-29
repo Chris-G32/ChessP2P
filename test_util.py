@@ -1,4 +1,4 @@
-from chessboard import ChessBoard
+from chessboard import ChessBoard,Piece
 import PySimpleGUI as sg
 import json
 
@@ -47,11 +47,13 @@ def main():
 
     layout = [
         [sg.Frame('Grid', create_grid_layout(rows, cols, grid))],
-        [sg.Button('Save_Board'), sg.Button('Exit')],
+        [sg.Button('Save_Board'),sg.Combo(["Swap","Add","Delete"],"Swap",key="__mode__",change_submits=True),sg.Combo(["P","N","B","Q","K"],key="__symbol__",change_submits=True),sg.Combo(["B","W"],key="__color__"), sg.Button('Exit')],
     ]
 
     window = sg.Window('2D Array Editor', layout)
     first=None
+    # piece={"symbol":"P","color":0}
+    piece_placement_vals={"__mode__":"Swap"}
     while True:
         event, values = window.read()
 
@@ -66,36 +68,44 @@ def main():
             with open('boards.json', 'a') as f:
                 json.dump(converted, f)
                 f.write(",\n")
-
+        elif event=="__mode__":
+            piece_placement_vals=values
+            first=None
+            pass
+        elif event=="__symbol__":
+            first=None
+            piece_placement_vals=values
+        elif event=="__color__":
+            first=None
+            piece_placement_vals=values
         else:
-            try:
-                if first==None:
-                    first=(event)
-                else:
-                    second=(int(event[0]),int(event[1]))
-                    swap(first,second)
-                    button1=window[first]
-                    button2=window[event]
-                    update_button(button1,first[0],first[1])
-                    update_button(button2,second[0],second[1])
-                    # tile=grid[i][j]
-                    # init_val= "" if tile.piece==None else tile.piece.symbol
-                    # color="black"
-                    # if tile.piece!=None:
-                    #     if tile.piece.color==ChessBoard.BLACK:
-                    #         color="red"
-
-
-                    
-                    # tile1=grid[int(first[0])][int(first[1])]
-                    # tile2=grid[int(event[0])][int(event[1])]
-                    # first=(int(first[0]),int(first[1]))
-                    # tmp=
-                    # window
-                    
-                    first=None
-            except:
-                pass
+            if piece_placement_vals["__mode__"]=="Swap":
+                try:
+                    if first==None:
+                        first=(event)
+                    else:
+                        second=(int(event[0]),int(event[1]))
+                        swap(first,second)
+                        button1=window[first]
+                        button2=window[event]
+                        update_button(button1,first[0],first[1])
+                        update_button(button2,second[0],second[1])
+                        first=None
+                except:
+                    pass
+            elif piece_placement_vals["__mode__"]=="Add":
+                color=ChessBoard.BLACK if values["__color__"]=="B" else ChessBoard.WHITE
+                tmp_piece=Piece(color)
+                tmp_piece.symbol=values["__symbol__"]
+                grid[event[0]][event[1]].piece=tmp_piece
+                button=window[event]
+                update_button(button,event[0],event[1])
+            elif piece_placement_vals["__mode__"]=="Delete":
+                tmp=grid[event[0]][event[1]]
+                tmp.piece=None
+                grid[event[0]][event[1]]=tmp
+                button=window[event]
+                update_button(button,event[0],event[1])
 
 
 
