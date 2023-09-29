@@ -116,13 +116,55 @@ class ChessBoard:
             self.white_pawns.append(board[6][i])
 
         return board
-    def alternate_background(background):
-        if background==47:
-            background=40
-        else:background=47
-        return background
+    
+    #array of form [[row,col,symbol,color],...]
+    #Only contains pieces and their locations
+    def load_board_from_array(self,arr):
+        self.board=[[Tile(row,col) for col in range(8)] for row in range(8)]
+        def create_piece(symbol,color):
+            if symbol == 'P':
+                return Pawn(color)
+            elif symbol == 'R':
+                return Rook(color)
+            elif symbol == 'N':
+                return Knight(color)
+            elif symbol == 'B':
+                return Bishop(color)
+            elif symbol == 'Q':
+                return Queen(color)
+            elif symbol == 'K':
+                return King(color)
+            else:
+                raise ValueError(f"Invalid piece symbol: {symbol}")
+        # # Create an 8x8 chessboard using a list of lists
+        # board = [[Tile(row,col) for col in range(8)] for row in range(8)]
+        for i in arr:
+            row = i[0]
+            col = i[1]
+            symbol = i[2]
+            color = i[3]
+            piece = create_piece(symbol, color)
+
+            if piece:
+                self.board[row][col] = Tile(row, col, piece)
+            
+            if isinstance(piece,Pawn):
+                if color==ChessBoard.BLACK:
+                    self.black_pawns.append(piece)
+                else:
+                     self.white_pawns.append(piece)
+            if isinstance(piece,King):
+                self.update_king_position(piece.color,row,col)
+               
+        # self.board = board
+    
 
     def display_board(self):
+        def alternate_background(background):
+            if background==47:
+                background=40
+            else:background=47
+            return background
         # ANSI escape codes for text color
         red_color = "\033[31m"  # Red for black pieces
         blue_color = "\033[96m"  # White for white pieces
@@ -147,7 +189,7 @@ class ChessBoard:
                 else:
                     piece_color = red_color if square.piece.get_color() == ChessBoard.BLACK else blue_color
                     rank_str += ANSI.background(background)+piece_color + ' ' + square.piece.symbol + reset_color
-                background=ChessBoard.alternate_background(background)
+                background=alternate_background(background)
             rank_str += ANSI.background(49)+" |"
             print(rank_str)
             white_first=not white_first
@@ -285,9 +327,9 @@ class ChessBoard:
             return False
         iterate_over=None
         if type=="QC":
-            iterate_over=range(1,king.col).__reversed__()
+            iterate_over=range(1,king.col+1).__reversed__()
         elif type=="KC":
-            iterate_over=range(king.col+1,7)
+            iterate_over=range(king.col,7)
             pass
         failed_castle=False
         move_from=king
