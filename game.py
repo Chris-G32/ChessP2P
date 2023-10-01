@@ -16,12 +16,18 @@ class GameConnectionHandler(CancellableAction):
         self.active_connection=False
         self.server_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket=None
-    
+    def __del__(self):
+        try:
+            self.server_socket.shutdown(socket.SHUT_RDWR)
+            self.client_socket.close()
+        except Exception as e:
+            print(e)
+
     def listen_for_accept(self,*args):
         host=args[0]
         friend=args[1]
         port=args[2]
-        
+        self.server_socket.shutdown(socket.SHUT_RDWR)#Shutdown server if up
         self.server_socket.bind((host, port))
 
         while not self.is_cancelled():
@@ -114,9 +120,10 @@ class Game:
         return self.connection_handler.attempt_connection_to_server(port,challenge)
     
     def is_game_over(self,mate_is_loss:bool):
+        #Possible bug here
         board_state=self.board.is_checkmate_or_stalemate(self.board.user_color)
         result_msg=""
-        if board_state is None:
+        if board_state == None:
             return False
         elif board_state=="CM":
             result_msg="Checkmate! "
@@ -168,7 +175,7 @@ class Game:
                 self.is_users_turn=not self.is_users_turn
             
             self.board.display_board()
-            
+        # self.connection_handler.server_socket.shutdown(socket.SHUT_RDWR)
             
 
 
