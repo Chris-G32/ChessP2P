@@ -80,7 +80,7 @@ class TestChessBoard(unittest.TestCase):
 
     def test_check_condition(self):
         for i in self.boards:
-            self.assertFalse(i.is_in_check(ChessBoard.WHITE))
+            self.assertTrue(i.is_in_check(ChessBoard.BLACK))
 
         # Test check condition
         # You should set up a specific board state to test this condition

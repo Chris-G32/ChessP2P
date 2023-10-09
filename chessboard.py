@@ -623,19 +623,17 @@ class Pawn(Piece):
         # Pawn capture (diagonal)
         if (new.row == current.row + direction):
             if (new.col == current.col - 1):
-                if isinstance(left.piece,Pawn):
+                if isinstance(left.piece,Pawn) and not new.occupied():
                     if left.piece.en_passantable and left.piece.color != self.color:
-                        return not new.occupied()
+                        return not new.occupied() #Leaving this for clarity, though it could be reduced to True
                 else:
                     return new.occupied()
             elif (new.col == current.col + 1):
-                if isinstance(right.piece,Pawn):
+                if isinstance(right.piece,Pawn) and not new.occupied():
                     if right.piece.en_passantable and right.piece.color != self.color:
                         return not new.occupied()
                 else:
                     return new.occupied()
-
-        
         # Invalid move
         return False
 
