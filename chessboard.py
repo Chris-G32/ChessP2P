@@ -41,14 +41,15 @@ class ChessBoard:
             if len(move_str)>5:
                 print("Invalid move: Too long.")
                 return start_tile,dest_tile
-
+            
             # Extract the source and destination squares from the move string
-            from_square = move_str[:2]
-            dest_square = move_str[2:4]
+            from_square = move_str[:2].lower()
+            dest_square = move_str[2:4].lower()
+
             promotion=None
             #Length should never be longer than 5 otherwise its an error
             if len(move_str)==5:
-                promotion = move_str[-1]
+                promotion = move_str[-1].upper()
 
             # Check if the source and destination squares are valid
             if not self.is_valid_square(from_square) or not self.is_valid_square(dest_square):
@@ -207,7 +208,7 @@ class ChessBoard:
 
 
     
-    def full_move_validation(self,start_tile:Tile,dest_tile:Tile):
+    def full_move_validation(self,start_tile:Tile,dest_tile:Tile,promotion=None):
         #Get the piece we are moving
         piece=start_tile.piece
         if piece == None:
@@ -218,6 +219,10 @@ class ChessBoard:
             return False
         
         if isinstance(piece,Pawn):
+            if dest_tile.row==0 or dest_tile.row==7:
+                if promotion==None:
+                    print("Please add the symbol to promote to at the end of your move. Eg. e7g8Q for queen")
+                    return False
             left=self.get_tile(start_tile.row,start_tile.col-1)
             right=self.get_tile(start_tile.row,start_tile.col+1)
             if not piece.validate_move(start_tile,dest_tile,left,right):
@@ -434,7 +439,7 @@ class ChessBoard:
                 start_tile.piece.en_passantable=True
 
             #Promotion
-            if dest_tile.row==0 or dest_tile.row==7:
+            if (dest_tile.row==0 or dest_tile.row==7) and not no_promote:
                 start_tile.piece=ChessBoard.create_piece(promote_to.upper(),start_tile.piece.color)
            
         #Handle king moves
@@ -483,6 +488,8 @@ class ChessBoard:
         #Probably not a good idea to have this be a happy side effect but it should work for now
         start_tile,dest_tile,promotion = self.move_decoder.decode_move(move_str)
 
+
+
         #Null checks
         if(start_tile is None or dest_tile is None):
             return False
@@ -494,7 +501,7 @@ class ChessBoard:
             return True
         
         #Validate the move
-        if(self.full_move_validation(start_tile,dest_tile)==False):
+        if(self.full_move_validation(start_tile,dest_tile,promotion)==False):
             return False
         
         #Move piece
