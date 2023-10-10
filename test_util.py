@@ -46,7 +46,7 @@ def main():
     layout = [
         [sg.Frame('Grid', create_grid_layout(rows, cols, grid))],
         [sg.Button('Save_Board'),sg.Combo(["Swap","Add","Delete"],"Swap",key="__mode__",change_submits=True),sg.Combo(["P","N","B","Q","K"],key="__symbol__",change_submits=True),sg.Combo(["B","W"],key="__color__") ,sg.Button('Exit')],
-        [sg.Combo(["black","white"],"white",key="__playing_as__",tooltip="Color to play"),sg.Combo(test_categories.TESTS,tooltip="Test Category",key="__test_category__"),sg.Combo([True,False,"type other"],key="__expected_result__",default_value=True,tooltip="Desired test result."),sg.InputText(tooltip="Move to make",key="__move__")]
+        [sg.Combo(["black","white"],"white",key="__playing_as__",tooltip="Color to play"),sg.Combo(test_categories.TESTS,tooltip="Test Category",key="__test_category__"),sg.Combo([True,False,"CM","SM","None"],key="__expected_result__",default_value=True,tooltip="Desired test result."),sg.InputText(tooltip="Move to make",key="__move__")]
     ]
 
     window = sg.Window('2D Array Editor', layout)

@@ -337,12 +337,17 @@ class ChessBoard:
             return False
         if rook.piece.has_moved or king.piece.has_moved:
             return False
+        if self.is_in_check(color):
+            return False
         iterate_over=None
+        KING_START_COL=4
         if type=="QC":
-            iterate_over=range(1,king.col+1).__reversed__()
+            KING_DEST=2
+            iterate_over=range(KING_DEST,KING_START_COL).__reversed__()
         elif type=="KC":
-            iterate_over=range(king.col,7)
-            pass
+            KING_DEST=6
+            iterate_over=range(KING_START_COL+1,KING_DEST+1)
+            
         failed_castle=False
         move_from=king
         move_to=None
@@ -399,7 +404,7 @@ class ChessBoard:
         king_dest_col=None
         if(castle_type=="QC"):
             rook_tile=self.get_tile(row,0)
-            king_dest_col=1
+            king_dest_col=2
             rook_dest_col=king_tile.col-1
         elif castle_type=="KC":
             rook_tile=self.get_tile(row,7)

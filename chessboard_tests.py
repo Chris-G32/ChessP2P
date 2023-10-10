@@ -1,17 +1,19 @@
 from chessboard import ChessBoard,Piece,Pawn,Knight,King,Queen,Rook,Bishop
-from test_categories import TESTS
+from test_categories import TESTS,TEST_VALID_MOVE,TEST_CHECK,TEST_GAME_OVER
 import unittest
 
 #Make a utility for making board states to test, pysimplegui maybe
 #Test castling out of check, test various castling things
 #En passant, identify edge cases if possible.
 class TestCase:
-    def __init__(self,board,expected,board_move=None):
+    def __init__(self,board,expected_result,board_move=None):
         self.board=board
-        self.expected_result=expected
-        self.move=board_move
+        self.expected_result=expected_result
+        self.move=None if board_move=='' else board_move
 
 class TestChessBoard(unittest.TestCase):
+    # Show boards when loading them to verify loaded properly if desired
+    PREVIEW_BOARDS=True
     def setUp(self):
         self.board = ChessBoard(ChessBoard.WHITE)
         self.boards=[]
@@ -62,32 +64,27 @@ class TestChessBoard(unittest.TestCase):
             #Load expected value
             end_expected_index=i.find(",",end_color_index+1)
             expected=i[end_color_index+1:end_expected_index]
-            try:
-                #Cast to bool if possible
-                expected=bool(expected)
-            except:
-                pass
-
+            #Check if looking for return of none
+            if expected.lower()=="none":
+                expected=None
+            elif expected.lower()=="true":
+                expected=True
+            elif expected.lower()=="false":
+                expected=False
             #Load move
             move_end_index=i.find(",",end_expected_index+1)
             move=i[end_expected_index+1:move_end_index]
-            
+
+            #Create board
             board_array=parse_chessboard_string(i[move_end_index+1:])
-            # board_as_white=ChessBoard(ChessBoard.WHITE)
-            # board_as_white.load_board_from_array(board_array)
-            # self.boards.append(board_as_white)
-            board_as_black=ChessBoard(ChessBoard.BLACK)
-            board_as_black.load_board_from_array(board_array)
-            self.boards.append(board_as_black)
-    
-    # def test_castle(self):
-    #     print("CASTLE")
-    #     for i in self.boards:
-    #         i.display_board()
-    #         self.assertFalse(i.move("O-O"))
-    #         i.display_board()
+            board=ChessBoard(color)
+            board.load_board_from_array(board_array)
+            if TestChessBoard.PREVIEW_BOARDS:
+                board.display_board()
             
-    #     print("END CASTLE")
+            #Construct test case
+            test=TestCase(board,expected,move)
+            self.tests[category].append(test)
 
     def test_initial_board_setup(self):
         # Test if the initial board setup is correct
@@ -95,48 +92,29 @@ class TestChessBoard(unittest.TestCase):
         self.assertEqual(len(self.board.black_pawns), 8)
         # Add more assertions for other initial piece positions
 
-    def test_valid_piece_move(self):
-        # Test a valid piece move
-        self.assertTrue(self.board.move("e2e4"))
-        # Add more assertions for other piece movements
+    def test_piece_move(self):
+        for test_case in self.tests[TEST_VALID_MOVE]:
+            # test_case.board.display_board()
+            self.assertEqual(test_case.board.move(test_case.move),test_case.expected_result)
 
-    def test_invalid_piece_move(self):
-        # Test an invalid piece move
-        self.assertFalse(self.board.move("e2e5"))  # Invalid pawn move
-        # Add more assertions for other invalid moves
-
-    def test_check_condition(self):
-        for i in self.boards:
-            self.assertTrue(i.is_in_check(ChessBoard.BLACK))
-
-        # Test check condition
-        # You should set up a specific board state to test this condition
-        # Make a move that puts the opponent's king in check and then check if it's in check
-        self.board.move("e2e4")
-        self.board.move("f7f5",True)
-        self.board.move("d1h5")  # Queen threatens the black king
-        self.board.display_board()
-        self.assertTrue(self.board.is_in_check(ChessBoard.BLACK))
- 
-    def test_checkmate_condition(self):
-        print("\nTesting Checkmate\n")
-        for i in self.boards:
-            self.assertEqual(i.is_checkmate_or_stalemate(i.user_color), None)
-
+    #Checks if the player to play is in check
+    def test_check(self):
+        #When true it will attempt a move then see if in check.
+        TRY_MOVE_FLAG=False
+        for test_case in self.tests[TEST_CHECK]:
+            if TRY_MOVE_FLAG and test_case.move !=None:
+                test_case.board.move(test_case.move)
+            self.assertEqual(test_case.board.is_in_check(test_case.board.user_color),test_case.expected_result)
         
-        # Test checkmate condition
-        # You should set up a specific board state to test this condition
-        # Make a series of moves that lead to checkmate
-        self.assertTrue(self.board.move("f2f3"))
-        self.assertTrue(self.board.move("e7e5",True))
-        self.assertTrue( self.board.move("g2g4"))
-        self.assertTrue (self.board.move("d8h4",True))  # Queen threatens the white king
-        # self.board.display_board()
-        self.assertEqual(self.board.is_checkmate_or_stalemate(ChessBoard.WHITE), "CM")
-
-    def runTest(self):
-        print("RUNTEST")
-        pass
+ 
+    def test_game_over(self):
+        #When true it will attempt a move before test
+        TRY_MOVE_FLAG=False
+        for test_case in self.tests[TEST_GAME_OVER]:
+            if TRY_MOVE_FLAG and test_case.move !=None:
+                test_case.board.move(test_case.move)
+            self.assertEqual(test_case.board.is_checkmate_or_stalemate(test_case.board.user_color),test_case.expected_result)
+    
 
 if __name__ == '__main__':
     unittest.main()
