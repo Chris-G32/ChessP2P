@@ -1,0 +1,7 @@
+TEST_CHECKMATE="test_mate"
+TEST_VALID_MOVE="test_valid_move"
+TEST_CHECK="test_check"
+TEST_GAME_OVER="test_game_over"
+
+
+TESTS=[TEST_CHECKMATE,TEST_VALID_MOVE,TEST_CHECK,TEST_GAME_OVER]

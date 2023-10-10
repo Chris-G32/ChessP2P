@@ -1,7 +1,7 @@
 from chessboard import ChessBoard,Piece
 import PySimpleGUI as sg
 import json
-
+import test_categories
 def create_grid_layout(rows, cols, grid):
     layout = []
     for i in range(rows):
@@ -45,7 +45,8 @@ def main():
 
     layout = [
         [sg.Frame('Grid', create_grid_layout(rows, cols, grid))],
-        [sg.Button('Save_Board'),sg.Combo(["Swap","Add","Delete"],"Swap",key="__mode__",change_submits=True),sg.Combo(["P","N","B","Q","K"],key="__symbol__",change_submits=True),sg.Combo(["B","W"],key="__color__"), sg.Button('Exit')],
+        [sg.Button('Save_Board'),sg.Combo(["Swap","Add","Delete"],"Swap",key="__mode__",change_submits=True),sg.Combo(["P","N","B","Q","K"],key="__symbol__",change_submits=True),sg.Combo(["B","W"],key="__color__") ,sg.Button('Exit')],
+        [sg.Combo(["black","white"],"white",key="__playing_as__",tooltip="Color to play"),sg.Combo(test_categories.TESTS,tooltip="Test Category",key="__test_category__"),sg.Combo([True,False,"type other"],key="__expected_result__",default_value=True,tooltip="Desired test result."),sg.InputText(tooltip="Move to make",key="__move__")]
     ]
 
     window = sg.Window('2D Array Editor', layout)
@@ -58,6 +59,11 @@ def main():
         if event == sg.WIN_CLOSED or event == 'Exit':
             break
         elif event == 'Save_Board':
+            test_cat=values["__test_category__"]
+            playing_as=values["__playing_as__"]
+            expected_result=values["__expected_result__"]
+            move=values['__move__']
+
             converted=[]
             for i in range(8):
                 for j in range(8):
@@ -66,6 +72,14 @@ def main():
                         converted.append([i,j,piece.symbol,piece.color])
             #note: This file does not really follow json, formatting
             with open('boards.json', 'a') as f:
+                f.write(test_cat)
+                f.write(",")
+                f.write(playing_as)                
+                f.write(",")
+                f.write(str(expected_result))
+                f.write(",")
+                f.write(move)
+                f.write(",")
                 json.dump(converted, f)
                 f.write("\n")
         elif event=="__mode__":

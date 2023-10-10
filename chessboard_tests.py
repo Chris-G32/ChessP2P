@@ -1,16 +1,23 @@
 from chessboard import ChessBoard,Piece,Pawn,Knight,King,Queen,Rook,Bishop
-
+from test_categories import TESTS
 import unittest
 
 #Make a utility for making board states to test, pysimplegui maybe
 #Test castling out of check, test various castling things
 #En passant, identify edge cases if possible.
-
+class TestCase:
+    def __init__(self,board,expected,board_move=None):
+        self.board=board
+        self.expected_result=expected
+        self.move=board_move
 
 class TestChessBoard(unittest.TestCase):
     def setUp(self):
         self.board = ChessBoard(ChessBoard.WHITE)
         self.boards=[]
+        self.tests={}
+        for category in TESTS:
+            self.tests[category]=[]
         self.load_boards_from_file()
     def tearDown(self):
         pass
@@ -45,7 +52,27 @@ class TestChessBoard(unittest.TestCase):
             boards=f.readlines()
 
         for i in boards:
-            board_array=parse_chessboard_string(i)
+            #Load category
+            category_end_index=i.find(",")
+            category=i[:category_end_index]
+            #Load color
+            end_color_index=i.find(",",category_end_index+1)
+            color_str=i[category_end_index+1:end_color_index]
+            color=ChessBoard.WHITE if color_str=="white" else ChessBoard.BLACK
+            #Load expected value
+            end_expected_index=i.find(",",end_color_index+1)
+            expected=i[end_color_index+1:end_expected_index]
+            try:
+                #Cast to bool if possible
+                expected=bool(expected)
+            except:
+                pass
+
+            #Load move
+            move_end_index=i.find(",",end_expected_index+1)
+            move=i[end_expected_index+1:move_end_index]
+            
+            board_array=parse_chessboard_string(i[move_end_index+1:])
             # board_as_white=ChessBoard(ChessBoard.WHITE)
             # board_as_white.load_board_from_array(board_array)
             # self.boards.append(board_as_white)
