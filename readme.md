@@ -5,6 +5,7 @@ ChessP2P is a peer-to-peer (P2P) chess game implemented in Python that enables y
 ## Table of Contents
 - [Getting Started](#getting-started)
 - [Features](#features)
+- [Navigating The Menu](#navigating-the-menu)
 - [How to Play](#how-to-play)
 - [Contributing](#contributing)
 - [License](#license)
@@ -53,16 +54,15 @@ ChessP2P offers the following features:
 
 ## Navigating The Menu
 
-1. **Challenge Friend** Enter your friends IP address and a message for them if you want to. Wait for accept or enter something to cancel.
+1. **Challenge Friend:** Enter your friends IP address and a message for them if you want to. Wait for accept or enter something to cancel.
 
-2. **View Incoming Challenges** Shows your most recent challenges. Only the most recent challenge per IP.
+2. **View Incoming Challenges:** Shows your most recent challenges. Only the most recent challenge per IP.
 
-3. **Exit** Exits the application cleanly, same as ```Ctrl+C```.
-
+3. **Exit:** Exits the application cleanly, same as ```Ctrl+C```.
 
 ## How to Play
 
-ChessP2P  follows the standard rules of chess. To make a move, follow these steps:
+ChessP2P follows the standard rules of chess. In order to make a move, follow these steps:
 
 - **Make a move:** Type the coordinates of the piece you want to move and the square you want to move to. Eg. ```e2e4```
 
@@ -74,7 +74,7 @@ ChessP2P  follows the standard rules of chess. To make a move, follow these step
 
 - **Check, Checkmate, and Stalemate:** You will receieve a message saying "Check!" when a check occurs. The game will end in the event of checkmate or stalemate and you will be informed of what happened.
 
-- **Resign** To resign from the game, simply type quit when it is your turn. Alternatively you can ```Ctrl+C``` at any time to stop the app.
+- **Resign:** To resign from the game, simply type quit when it is your turn. Alternatively you can ```Ctrl+C``` at any time to stop the app.
 
 <!-- ## Options
 
