@@ -51,17 +51,30 @@ ChessP2P offers the following features:
 - **Peer-to-Peer Chess:** Play chess with other players directly by entering their IP address.
 - **Decentralized:** ChessP2P does not rely on central servers or third-party services.
 
+## Navigating The Menu
+
+1. **Challenge Friend** Enter your friends IP address and a message for them if you want to. Wait for accept or enter something to cancel.
+
+2. **View Incoming Challenges** Shows your most recent challenges. Only the most recent challenge per IP.
+
+3. **Exit** Exits the application cleanly, same as ```Ctrl+C```.
+
+
 ## How to Play
 
 ChessP2P  follows the standard rules of chess. To make a move, follow these steps:
 
-1. **Select a Piece:** Click on the chess piece you want to move. Valid moves for the selected piece will be highlighted.
+- **Make a move:** Type the coordinates of the piece you want to move and the square you want to move to. Eg. ```e2e4```
 
-2. **Choose a Destination:** Click on the square where you want to move the selected piece. If the move is legal, the piece will be moved to the new square.
+- **Special Moves:** 
+   - **En Passant:** To capture with en passant simply capture the empty square behind the pawn. Capturing en passant would look something like this ```e5d6```
+   - **Castling:** Enter ```O-O``` for a king side castle or ```O-O-O``` for a queen side castle.
+   - **Pawn Promotion:** Enter your move, followed by the symbol of the piece to promote to. Queen 'Q', Bishop 'B', Knight 'N', Rook 'R'. Eg. ```e7e8Q``` would promote your pawn to a queen if you were playing white.
+   ChessP2P supports special moves such as castling and en passant. When these moves are possible, the interface will provide options to execute them.
 
-3. **Special Moves:** ChessP2P supports special moves such as castling and en passant. When these moves are possible, the interface will provide options to execute them.
+- **Check, Checkmate, and Stalemate:** You will receieve a message saying "Check!" when a check occurs. The game will end in the event of checkmate or stalemate and you will be informed of what happened.
 
-4. **Check and Checkmate:** The application will detect check and checkmate situations and indicate them accordingly.
+- **Resign** To resign from the game, simply type quit when it is your turn. Alternatively you can ```Ctrl+C``` at any time to stop the app.
 
 <!-- ## Options
 
