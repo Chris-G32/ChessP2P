@@ -37,6 +37,7 @@ class Client:
         
     def shutdown_server():
         Client.server_socket.shutdown(socket.SHUT_RDWR)
+        Client.server_socket.close()
         print("Shutting down server...")
         Client.keep_listening=False
     def start_server():
@@ -75,11 +76,12 @@ class Client:
 
                 if not data:
                     break
+                client_socket.shutdown(socket.SHUT_RDWR)
                 client_socket.close()
         except OSError as e:
             print(e)
             # print("--error in challenge listener, please restart app--")
-            
+        Client.server_socket.shutdown(socket.SHUT_RDWR)
         Client.server_socket.close()
         Client.server_up=False
     
@@ -118,8 +120,8 @@ class ChallengeFriend(MenuOption):
         
         message = json.dumps(challenge_msg.__dict__,default=json_util.default)
         client_socket.send(message.encode())
+        client_socket.shutdown(socket.SHUT_RDWR)
         client_socket.close()
-        
         #Wait for connection back from challenged IP
         challenge_accepted= game.await_challenge_response(Client.PLAY_ON_PORT,Client.ip,friend_ip)
 

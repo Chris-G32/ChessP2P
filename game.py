@@ -17,17 +17,20 @@ class GameConnectionHandler(CancellableAction):
         self.server_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket=None
     def __del__(self):
+        self.finalize_connection()
+    def finalize_connection(self):
         try:
             self.server_socket.shutdown(socket.SHUT_RDWR)
+            self.server_socket.close()
+            self.client_socket.shutdown(socket.SHUT_RDWR)
             self.client_socket.close()
         except Exception as e:
             print(e)
-
     def listen_for_accept(self,*args):
         host=args[0]
         friend=args[1]
         port=args[2]
-        self.server_socket.shutdown(socket.SHUT_RDWR)#Shutdown server if up
+        # self.server_socket.shutdown(socket.SHUT_RDWR)#Shutdown server if up
         self.server_socket.bind((host, port))
 
         while not self.is_cancelled():
@@ -69,9 +72,12 @@ class GameConnectionHandler(CancellableAction):
         if(socket_proc.is_alive()):
             self.cancel()
             if self.server_socket:#if not None
-                self.server_socket.shutdown(socket.SHUT_RDWR)
+                try:
+                    self.server_socket.shutdown(socket.SHUT_RDWR)
+                    self.server_socket.close()
+                except:
+                    pass
             print("Cancel succeeded")
-
         socket_proc.join()
 
         return self.client_socket!=None 
@@ -146,7 +152,7 @@ class Game:
                 valid_move=False
                 while not valid_move:
                     move = input("Enter your move, or 'quit' to quit: ")
-                    
+                
                     if move.lower() == 'quit':
                         self.game_over=True
                         break
@@ -164,6 +170,8 @@ class Game:
                 self.connection_handler.client_socket.settimeout(None)
                 #End turn
                 self.is_users_turn=not self.is_users_turn
+                if self.is_game_over(mate_is_loss=False):
+                    self.game_over=True
             else:
                 print("Wait for your opponents move...")
                 resp=self.connection_handler.client_socket.recv(1028).decode()
@@ -173,12 +181,5 @@ class Game:
                 if self.is_game_over(mate_is_loss=True):
                     self.game_over=True
                 self.is_users_turn=not self.is_users_turn
-            
             self.board.display_board()
-        # self.connection_handler.server_socket.shutdown(socket.SHUT_RDWR)
-            
-
-
-            # self.board.display_board()
-            
-            # move=input("Select piece to move")
+        
