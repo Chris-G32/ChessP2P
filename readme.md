@@ -1,6 +1,6 @@
 # ChessP2P
 
-ChessP2P is a peer-to-peer (P2P) chess game implemented in Python that enables you to play chess with others by directly connecting to their IP address. With ChessP2P, you can play chess matches without relying on a central server or third-party services.
+ChessP2P is a peer-to-peer (P2P) chess game implemented in Python that enables you to play chess with others by directly connecting to their IP address. With ChessP2P, you can play chess matches with people connected to your local network.
 
 ## Table of Contents
 - [Getting Started](#getting-started)
